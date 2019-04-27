@@ -5,21 +5,22 @@ import org.scalatest.{FlatSpec, Matchers}
 
 class GraphTest extends FlatSpec with Matchers {
 
-  val testGraph = Graph(AdjMatrix(  Row(0, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0),
-                                    Row(1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0),
-                                    Row(1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0),
-                                    Row(1, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0),
-                                    Row(1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0),
-                                    Row(1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1),
-                                    Row(0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0),
-                                    Row(0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0),
-                                    Row(0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0),
-                                    Row(0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0),
-                                    Row(0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0)
-                                  ))
+  val testGraph = Graph(AdjMatrix(
+    Row(0, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0),
+    Row(1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0),
+    Row(1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0),
+    Row(1, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0),
+    Row(1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0),
+    Row(1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1),
+    Row(0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0),
+    Row(0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0),
+    Row(0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0),
+    Row(0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0),
+    Row(0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0)
+  ))
 
   "all vertices" should "be from 0 to 10" in {
-    testGraph.getVertices shouldBe List.range(0, 11)
+    testGraph.getVertices shouldBe List.range(0, 11).toSet
     testGraph.getVertices.size shouldBe 11
   }
 
@@ -33,22 +34,25 @@ class GraphTest extends FlatSpec with Matchers {
   }
 
   "edges" should "either exists or not exist" in {
-
-    testGraph.isEdge(0,1) shouldBe true
-    testGraph.isEdge(0,0) shouldBe false
+    testGraph.isEdge(0, 1) shouldBe Right(true)
+    testGraph.isEdge(0, 0) shouldBe Right(false)
 
     testGraph.getVertices.foreach(vertex => {
       if (vertex == 5)
-        testGraph.isEdge(10, vertex) shouldBe true
+        testGraph.isEdge(10, vertex) shouldBe Right(true)
       else
-        testGraph.isEdge(10, vertex) shouldBe false
+        testGraph.isEdge(10, vertex) shouldBe Right(false)
     })
   }
 
   "graph" should "be incorrect and throw exception" in {
     assertThrows[IllegalArgumentException] {
-      Graph(AdjMatrix(Row(0,0,4), Row(0,0,0), Row(0,0,0)))
-      Graph(AdjMatrix(Row(0,0,1), Row(0,0,0)))
+      Graph(AdjMatrix(Row(0, 0, 4), Row(0, 0, 0), Row(0, 0, 0)))
+      Graph(AdjMatrix(Row(0, 0, 1), Row(0, 0, 0)))
     }
+  }
+
+  "vertex 3" should "have vertices 0, 8 and 9 as neighbours" in {
+    testGraph.getNeighbours(3) shouldBe Right(Set(0, 8, 9))
   }
 }

@@ -4,20 +4,44 @@ import graph.Graph._
 
 case class Graph(adjMatrix: AdjMatrix) {
 
-  def getVertices = List.range(0, adjMatrix.size)
+  def getVertices: Set[Vertex] = if (adjMatrix.isEmpty) Set.empty else List.range(0, adjMatrix.size).toSet
 
   def hasVertex(v: Vertex) = 0 <= v && v <= adjMatrix.size - 1
-  def isEdge(v1: Vertex, v2: Vertex) = hasVertex(v1) && hasVertex(v2) && adjMatrix(v1)(v2) == 1
 
+  def isEdge(v1: Vertex, v2: Vertex): Either[String, Boolean] = {
+    if (!hasVertex(v1))
+      Left("Vertex " + v1 + " is not in the graph.")
+    else if (!hasVertex(v2))
+      Left("Vertex " + v2 + " is not in the graph.")
+    else
+      Right(adjMatrix(v1)(v2) == 1)
+  }
+
+  def getNeighbours(v: Vertex): Either[String, Set[Vertex]] = {
+    if (hasVertex(v)) {
+      Right(adjMatrix(v).foldLeft[Set[Vertex]](Set.empty) { (acc, value) => {
+        value match {
+          case 0 => acc
+          case 1 => acc + value // TODO: get the index, not the value itself!!!
+        }
+      }
+      })
+    }
+    else {
+      Left("No such vertex in the graph!")
+    }
+  }
 
   // def bfsTraversal(start: Int, end: Int, neighbours: Int => List[Int]): Queue = ???
 }
 
 case object Graph {
   type Row = List[Int]
+
   def Row(xs: Int*) = List(xs: _*)
 
   type AdjMatrix = List[Row]
+
   def AdjMatrix(xs: Row*) = List(xs: _*)
 
   type Vertex = Int
@@ -42,7 +66,7 @@ case object Graph {
 
 object MyTest {
   def main(args: Array[String]): Unit = {
-    val testGraph = Graph(AdjMatrix(Row(0,0,1), Row(0,0,0), Row(0,0,0)))
+    val testGraph = Graph(AdjMatrix(Row(0, 0, 1), Row(0, 0, 0), Row(0, 0, 0)))
 
 
   }
