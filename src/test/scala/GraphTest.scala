@@ -3,6 +3,8 @@ package graph
 import graph.Graph.{AdjMatrix, Row}
 import org.scalatest.{FlatSpec, Matchers}
 
+import scala.util.Random
+
 class GraphTest extends FlatSpec with Matchers {
 
   val testGraph = Graph(AdjMatrix(
@@ -18,6 +20,8 @@ class GraphTest extends FlatSpec with Matchers {
     Row(0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0),
     Row(0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0)
   ))
+
+  val testGraphManyVertices = Graph(List.fill(2000)(List.fill(2000)(Random.nextInt(2))))
 
   "all vertices" should "be from 0 to 10" in {
     testGraph.getVertices shouldBe List.range(0, 11).toSet

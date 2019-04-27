@@ -4,6 +4,7 @@ import graph.Graph._
 
 import scala.annotation.tailrec
 import scala.collection.immutable.Queue
+import scala.util.Random
 
 case class Graph(adjMatrix: AdjMatrix) {
 
@@ -30,6 +31,8 @@ case class Graph(adjMatrix: AdjMatrix) {
       Left("No such vertex in the graph!")
     }
   }
+
+  def printAdjMatrix = adjMatrix.foreach(println)
 
   def bfsTraversalFrom(start: Vertex): List[Vertex] = {
 
@@ -64,7 +67,7 @@ case object Graph {
   type Vertex = Int
 
   def apply(adjMatrix: AdjMatrix): Graph = {
-    def checkMatrixValidity = {
+    def checkAdjMatrixValidity = {
       adjMatrix.foreach(row => {
         if (row.size != adjMatrix.size)
           throw new IllegalArgumentException("Adjacency matrix has incorrect dimensions!")
@@ -76,12 +79,21 @@ case object Graph {
       })
     }
 
-    checkMatrixValidity
+    checkAdjMatrixValidity
     new Graph(adjMatrix)
   }
 }
 
 object MyTest {
+
+  def time[R](block: => R): R = {
+    val t0 = System.currentTimeMillis()
+    val result = block    // call-by-name
+    val t1 = System.currentTimeMillis()
+    println("Elapsed time: " + (t1 - t0) / 1000 + "s")
+    result
+  }
+
   def main(args: Array[String]): Unit = {
     val testGraph = Graph(AdjMatrix(
       Row(0, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0),
@@ -97,8 +109,10 @@ object MyTest {
       Row(0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0)
     ))
 
-    println(testGraph.bfsTraversalFrom(0))
+    val testGraphManyVertices = Graph(List.fill(2000)(List.fill(2000)(Random.nextInt(2))))
 
+    time { Thread.sleep(3000 ) }
+    // time { testGraphManyVertices.bfsTraversalFrom(0) }
   }
 }
 
