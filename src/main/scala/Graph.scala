@@ -21,15 +21,7 @@ case class Graph(adjMatrix: AdjMatrix) {
 
   def getNeighbours(v: Vertex): Either[String, Set[Vertex]] = {
     if (hasVertex(v)) {
-      var neighbours: Set[Vertex] = Set.empty
-
-      for(index <- 0 to getNumVertices - 1){
-        if(adjMatrix(v)(index) == 1){
-          neighbours += index
-        }
-      }
-
-      Right(neighbours)
+      Right(List.range(0, getNumVertices).filter(v1 => adjMatrix(v)(v1) == 1).toSet)
     }
     else {
       Left("No such vertex in the graph!")
