@@ -6,6 +6,8 @@ case class Graph(adjMatrix: AdjMatrix) {
 
   def getVertices: Set[Vertex] = if (adjMatrix.isEmpty) Set.empty else List.range(0, adjMatrix.size).toSet
 
+  def getNumVertices = adjMatrix.size
+
   def hasVertex(v: Vertex) = 0 <= v && v <= adjMatrix.size - 1
 
   def isEdge(v1: Vertex, v2: Vertex): Either[String, Boolean] = {
@@ -19,13 +21,15 @@ case class Graph(adjMatrix: AdjMatrix) {
 
   def getNeighbours(v: Vertex): Either[String, Set[Vertex]] = {
     if (hasVertex(v)) {
-      Right(adjMatrix(v).foldLeft[Set[Vertex]](Set.empty) { (acc, value) => {
-        value match {
-          case 0 => acc
-          case 1 => acc + value // TODO: get the index, not the value itself!!!
+      var neighbours: Set[Vertex] = Set.empty
+
+      for(index <- 0 to getNumVertices - 1){
+        if(adjMatrix(v)(index) == 1){
+          neighbours += index
         }
       }
-      })
+
+      Right(neighbours)
     }
     else {
       Left("No such vertex in the graph!")
@@ -67,7 +71,6 @@ case object Graph {
 object MyTest {
   def main(args: Array[String]): Unit = {
     val testGraph = Graph(AdjMatrix(Row(0, 0, 1), Row(0, 0, 0), Row(0, 0, 0)))
-
 
   }
 }

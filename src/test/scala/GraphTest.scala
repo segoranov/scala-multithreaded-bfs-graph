@@ -21,7 +21,7 @@ class GraphTest extends FlatSpec with Matchers {
 
   "all vertices" should "be from 0 to 10" in {
     testGraph.getVertices shouldBe List.range(0, 11).toSet
-    testGraph.getVertices.size shouldBe 11
+    testGraph.getNumVertices shouldBe 11
   }
 
   "vertices" should "be in graph" in {
@@ -54,5 +54,9 @@ class GraphTest extends FlatSpec with Matchers {
 
   "vertex 3" should "have vertices 0, 8 and 9 as neighbours" in {
     testGraph.getNeighbours(3) shouldBe Right(Set(0, 8, 9))
+  }
+
+  "vertex 1" should "have vertices 0 and 6 as neighbours" in {
+    testGraph.getNeighbours(1) shouldBe Right(Set(0, 6))
   }
 }
