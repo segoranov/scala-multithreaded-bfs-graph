@@ -44,4 +44,11 @@ class GraphTest extends FlatSpec with Matchers {
         testGraph.isEdge(10, vertex) shouldBe false
     })
   }
+
+  "graph" should "be incorrect and throw exception" in {
+    assertThrows[IllegalArgumentException] {
+      Graph(AdjMatrix(Row(0,0,4), Row(0,0,0), Row(0,0,0)))
+      Graph(AdjMatrix(Row(0,0,1), Row(0,0,0)))
+    }
+  }
 }

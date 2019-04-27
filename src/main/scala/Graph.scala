@@ -21,11 +21,30 @@ case object Graph {
   def AdjMatrix(xs: Row*) = List(xs: _*)
 
   type Vertex = Int
+
+  def apply(adjMatrix: AdjMatrix): Graph = {
+    def checkMatrixValidity = {
+      adjMatrix.foreach(row => {
+        if (row.size != adjMatrix.size)
+          throw new IllegalArgumentException("Adjacency matrix has incorrect dimensions!")
+        else row.foreach(vertex => {
+          if (vertex != 0 && vertex != 1)
+            throw new IllegalArgumentException(
+              "Incorrect value in the matrix. Each value in the matrix should be either 1 or 0!")
+        })
+      })
+    }
+
+    checkMatrixValidity
+    new Graph(adjMatrix)
+  }
 }
 
 object MyTest {
   def main(args: Array[String]): Unit = {
-    
+    val testGraph = Graph(AdjMatrix(Row(0,0,1), Row(0,0,0), Row(0,0,0)))
+
+
   }
 }
 
