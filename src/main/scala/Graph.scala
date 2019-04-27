@@ -2,6 +2,9 @@ package graph
 
 import graph.Graph._
 
+import scala.annotation.tailrec
+import scala.collection.immutable.Queue
+
 case class Graph(adjMatrix: AdjMatrix) {
 
   def getVertices: Set[Vertex] = if (adjMatrix.isEmpty) Set.empty else List.range(0, adjMatrix.size).toSet
@@ -29,6 +32,29 @@ case class Graph(adjMatrix: AdjMatrix) {
   }
 
   // def bfsTraversal(start: Int, end: Int, neighbours: Int => List[Int]): Queue = ???
+  def bfsTraversalFromTo(from: Vertex, to: Vertex): Unit = {
+
+    @tailrec
+    def bfs(toVisit: Queue[Vertex], reached: Set[Vertex], path: List[Vertex]): List[Vertex] = {
+      if (toVisit.isEmpty) path
+      else if (toVisit.head == to) to :: path
+      else {
+        val current = toVisit.head
+        val newNeighbours = getNeighbours(current).right.get.filter(!reached(_))
+
+        println("ST_TEST: current " + current + " neighbours not reached: " + newNeighbours)
+        println("ST_TEST curpath: " + path)
+
+        bfs(
+          toVisit.dequeue._2.enqueue(newNeighbours),
+          reached ++ newNeighbours,
+          current :: path
+        )
+      }
+    }
+
+    bfs(Queue(from), Set(to), List.empty).reverse
+  }
 }
 
 case object Graph {
@@ -62,7 +88,21 @@ case object Graph {
 
 object MyTest {
   def main(args: Array[String]): Unit = {
-    val testGraph = Graph(AdjMatrix(Row(0, 0, 1), Row(0, 0, 0), Row(0, 0, 0)))
+    val testGraph = Graph(AdjMatrix(
+      Row(0, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0),
+      Row(1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0),
+      Row(1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0),
+      Row(1, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0),
+      Row(1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0),
+      Row(1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1),
+      Row(0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0),
+      Row(0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0),
+      Row(0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0),
+      Row(0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0),
+      Row(0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0)
+    ))
+
+    println(testGraph.bfsTraversalFromTo(7, 8))
 
   }
 }
