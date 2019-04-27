@@ -31,19 +31,14 @@ case class Graph(adjMatrix: AdjMatrix) {
     }
   }
 
-  // def bfsTraversal(start: Int, end: Int, neighbours: Int => List[Int]): Queue = ???
-  def bfsTraversalFromTo(from: Vertex, to: Vertex): Unit = {
+  def bfsTraversalFrom(start: Vertex): List[Vertex] = {
 
     @tailrec
     def bfs(toVisit: Queue[Vertex], reached: Set[Vertex], path: List[Vertex]): List[Vertex] = {
       if (toVisit.isEmpty) path
-      else if (toVisit.head == to) to :: path
       else {
         val current = toVisit.head
         val newNeighbours = getNeighbours(current).right.get.filter(!reached(_))
-
-        println("ST_TEST: current " + current + " neighbours not reached: " + newNeighbours)
-        println("ST_TEST curpath: " + path)
 
         bfs(
           toVisit.dequeue._2.enqueue(newNeighbours),
@@ -53,7 +48,7 @@ case class Graph(adjMatrix: AdjMatrix) {
       }
     }
 
-    bfs(Queue(from), Set(to), List.empty).reverse
+    bfs(Queue(start), Set(start), List.empty).reverse
   }
 }
 
@@ -102,7 +97,7 @@ object MyTest {
       Row(0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0)
     ))
 
-    println(testGraph.bfsTraversalFromTo(7, 8))
+    println(testGraph.bfsTraversalFrom(0))
 
   }
 }

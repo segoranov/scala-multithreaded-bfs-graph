@@ -59,4 +59,10 @@ class GraphTest extends FlatSpec with Matchers {
   "vertex 1" should "have vertices 0 and 6 as neighbours" in {
     testGraph.getNeighbours(1) shouldBe Right(Set(0, 6))
   }
+
+  "bfs traversal starting from all vertices" should "generate paths which contain all vertices" in {
+    testGraph.getVertices.foreach(vertex => {
+      testGraph.bfsTraversalFrom(vertex).toSet shouldBe testGraph.getVertices
+    })
+  }
 }
