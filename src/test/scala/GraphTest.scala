@@ -1,7 +1,7 @@
 package graph
 
 import graph.Graph.{AdjMatrix, Path, Row}
-import graph.Timer.{ElapsedMilliSeconds, time}
+import graph.Timer.{TimeElapsedInMilliseconds, time}
 import org.scalatest.{FlatSpec, Matchers}
 
 import scala.util.Random
@@ -71,10 +71,13 @@ class GraphTest extends FlatSpec with Matchers {
     })
   }
 
-  "bfs traversal starting from all vertices" should "be faster when the threads are more but not more than 4" in {
-    val mapThreadsNumberToTimeElapsed =
-      List.range(1, 5)
-        .foldLeft[Map[Int, ElapsedMilliSeconds]](Map.empty)((acc, numberOfThreads) => {
+  "bfs traversal starting from all vertices" should
+    "be faster when the threads are more but not more than available processors" in {
+    type NumberOfThreads = Int
+
+    val mapNumberOfThreadsToTimeElapsed =
+      List.range(1, Runtime.getRuntime.availableProcessors + 1)
+        .foldLeft[Map[NumberOfThreads, TimeElapsedInMilliseconds]](Map.empty)((acc, numberOfThreads) => {
 
         val millisecondsElapsed = time {
           //testGraph.bfsTraversalStartingFromAllVertices(numberOfThreads)
@@ -83,10 +86,10 @@ class GraphTest extends FlatSpec with Matchers {
         acc + (numberOfThreads -> millisecondsElapsed)
       })
 
-    mapThreadsNumberToTimeElapsed.foreach(println)
+    mapNumberOfThreadsToTimeElapsed.foreach(println)
 
-    mapThreadsNumberToTimeElapsed.foreach(pair => {
-      mapThreadsNumberToTimeElapsed
+    mapNumberOfThreadsToTimeElapsed.foreach(pair => {
+      mapNumberOfThreadsToTimeElapsed
         .filter(other => other._1 < pair._1)
         .foreach(other => other._2 should be > pair._2)
     })

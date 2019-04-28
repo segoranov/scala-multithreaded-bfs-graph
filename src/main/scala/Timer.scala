@@ -1,9 +1,9 @@
 package graph
 
 object Timer {
-  type ElapsedMilliSeconds = Long
+  type TimeElapsedInMilliseconds = Long
 
-  def time[R](block: => R): (R, ElapsedMilliSeconds)  = {
+  def time[R](block: => R): (R, TimeElapsedInMilliseconds)  = {
     val t0 = System.currentTimeMillis()
     val result = block // call-by-name
     val t1 = System.currentTimeMillis()

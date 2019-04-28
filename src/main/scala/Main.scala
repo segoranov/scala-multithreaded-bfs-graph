@@ -24,11 +24,10 @@ object Test {
     val testGraphManyVertices = Graph(List.fill(2000)(List.fill(2000)(Random.nextInt(2))))
 
     val result = time {
-      testGraph.bfsTraversalStartingFromAllVertices(numberOfThreads =  11)
+      testGraph.bfsTraversalStartingFromAllVertices(numberOfThreads =  4)
     }
 
-    // TODO: Sometimes this is printed before the last thread prints its result. Why???
-    println("TIME TAKEN FOR EVERYTHING IN MILLISECONDS: " + result._2)
+    println("Time taken for all the tasks to finish in milliseconds: " + result._2)
 
   }
 }
