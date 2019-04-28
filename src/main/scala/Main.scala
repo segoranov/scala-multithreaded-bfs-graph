@@ -1,17 +1,10 @@
-import graph.Graph.{AdjMatrix, Row}
-import graph._
+package graph
 
+import graph.Graph.{AdjMatrix, Row}
 import scala.util.Random
+import Timer.time
 
 object Test {
-
-  def time[R](block: => R): R = {
-    val t0 = System.currentTimeMillis()
-    val result = block // call-by-name
-    val t1 = System.currentTimeMillis()
-    println("Elapsed time: " + (t1 - t0) / 1000 + "s")
-    result
-  }
 
   def main(args: Array[String]): Unit = {
     val testGraph = Graph(AdjMatrix(
@@ -28,10 +21,14 @@ object Test {
       Row(0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0)
     ))
 
-    val testGraphManyVertices = Graph(List.fill(1000)(List.fill(1000)(Random.nextInt(2))))
+    val testGraphManyVertices = Graph(List.fill(2000)(List.fill(2000)(Random.nextInt(2))))
 
-    time {
-      testGraphManyVertices.bfsTraversalFrom(0)
+    val result = time {
+      testGraph.bfsTraversalStartingFromAllVertices(numberOfThreads = 11)
     }
+
+    // TODO: Sometimes this is printed before the last thread prints its result. Why???
+    println("TIME TAKEN FOR EVERYTHING IN MILLISECONDS: " + result._2)
+
   }
 }

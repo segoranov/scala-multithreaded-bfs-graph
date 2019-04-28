@@ -4,7 +4,12 @@ import graph.Graph._
 
 import scala.annotation.tailrec
 import scala.collection.immutable.Queue
-import scala.util.Random
+import scala.concurrent.{Await, Future}
+import scala.util.{Failure, Success}
+import scala.concurrent.ExecutionContext.Implicits.global
+import Timer._
+
+import scala.concurrent.duration.Duration
 
 case class Graph(adjMatrix: AdjMatrix) {
 
@@ -34,10 +39,62 @@ case class Graph(adjMatrix: AdjMatrix) {
 
   def printAdjMatrix = adjMatrix.foreach(println)
 
-  def bfsTraversalFrom(start: Vertex): List[Vertex] = {
+  def bfsTraversalStartingFromAllVertices(numberOfThreads: Int) = {
+    // TODO: see if below checks are ok. Handle exceptions functionally instead of throwing.
+    if (numberOfThreads <= 0) {
+      throw new IllegalArgumentException("Number of threads in bfs traversal must be at least 1!")
+    }
+
+    if (numberOfThreads > getNumVertices) {
+      throw new IllegalArgumentException("Number of threads cannot be higher than the number of vertices!")
+    }
+
+    var allTasks: Set[Future[(Path, ElapsedMilliSeconds)]] = Set.empty
+
+    List.range(0, numberOfThreads - 1).foreach(threadNumber => {
+      // start new asynchronous task
+      val f: Future[(Path, ElapsedMilliSeconds)] = Future {
+        println("Thread " + threadNumber + " starts BFS from vertex " + threadNumber)
+
+        // use threadNumber as number of vertex
+        time {
+          bfsTraversalFrom(threadNumber)
+        }
+      }
+
+      // callback - when the task is completed
+      f onComplete {
+        case Success(result) => println("Thread " + threadNumber
+          + " finished. Time elapsed milliseconds: " + result._2
+          + "; bfs result: " + result._1)
+        case Failure(t) => println("An error has occurred in thread " + threadNumber + ": " + t.getMessage)
+      }
+
+      allTasks += f
+    })
+
+    // continue synchronous work on main thread
+    List.range(numberOfThreads - 1, getNumVertices).foreach(vertex => {
+      println("Main thread starts BFS from vertex " + vertex)
+      val result = time {
+        bfsTraversalFrom(vertex)
+      }
+
+      println("Main thread finished. Time elapsed milliseconds: " + result._2
+        + "; bfs result: " + result._1)
+    })
+
+    // wait for all futures to complete before exiting
+    println("Waiting for all futures to complete")
+    allTasks.foreach(future => Await.ready(future, Duration.Inf))
+  }
+
+  def bfsTraversalFrom(start: Vertex): Path = {
+
+    Thread.sleep(1000)
 
     @tailrec
-    def bfs(toVisit: Queue[Vertex], reached: Set[Vertex], path: List[Vertex]): List[Vertex] = {
+    def bfs(toVisit: Queue[Vertex], reached: Set[Vertex], path: Path): Path = {
       if (toVisit.isEmpty) path
       else {
         val current = toVisit.head
@@ -65,6 +122,7 @@ case object Graph {
   def AdjMatrix(xs: Row*) = List(xs: _*)
 
   type Vertex = Int
+  type Path = List[Vertex]
 
   def apply(adjMatrix: AdjMatrix): Graph = {
     def checkAdjMatrixValidity = {
@@ -83,37 +141,3 @@ case object Graph {
     new Graph(adjMatrix)
   }
 }
-
-object MyTest {
-
-  def time[R](block: => R): R = {
-    val t0 = System.currentTimeMillis()
-    val result = block    // call-by-name
-    val t1 = System.currentTimeMillis()
-    println("Elapsed time: " + (t1 - t0) / 1000 + "s")
-    result
-  }
-
-  def main(args: Array[String]): Unit = {
-    val testGraph = Graph(AdjMatrix(
-      Row(0, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0),
-      Row(1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0),
-      Row(1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0),
-      Row(1, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0),
-      Row(1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0),
-      Row(1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1),
-      Row(0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0),
-      Row(0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0),
-      Row(0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0),
-      Row(0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0),
-      Row(0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0)
-    ))
-
-    val testGraphManyVertices = Graph(List.fill(2000)(List.fill(2000)(Random.nextInt(2))))
-
-    time { Thread.sleep(3000 ) }
-    // time { testGraphManyVertices.bfsTraversalFrom(0) }
-  }
-}
-
-
