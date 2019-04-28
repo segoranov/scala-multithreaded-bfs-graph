@@ -90,8 +90,7 @@ case class Graph(adjMatrix: AdjMatrix) {
   }
 
   def bfsTraversalFrom(start: Vertex): Path = {
-
-    Thread.sleep(1000)
+//    Thread.sleep(300)
 
     @tailrec
     def bfs(toVisit: Queue[Vertex], reached: Set[Vertex], path: Path): Path = {

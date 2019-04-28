@@ -22,7 +22,7 @@ class GraphTest extends FlatSpec with Matchers {
     Row(0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0)
   ))
 
-  val testGraphManyVertices = Graph(List.fill(100)(List.fill(100)(Random.nextInt(2))))
+  val testGraphManyVertices = Graph(List.fill(500)(List.fill(500)(Random.nextInt(2))))
 
   "all vertices" should "be from 0 to 10" in {
     testGraph.getVertices shouldBe List.range(0, 11).toSet
@@ -71,14 +71,14 @@ class GraphTest extends FlatSpec with Matchers {
     })
   }
 
-  "bfs traversal starting from all vertices" should "be faster when the threads are more" in {
+  "bfs traversal starting from all vertices" should "be faster when the threads are more but not a lot" in {
     val mapThreadsNumberToTimeElapsed =
-      List.range(1, 12)
+      List.range(1, 6)
         .foldLeft[Map[Int, ElapsedMilliSeconds]](Map.empty)((acc, numberOfThreads) => {
 
         val millisecondsElapsed = time {
-          testGraph.bfsTraversalStartingFromAllVertices(numberOfThreads)
-          // testGraphManyVertices.bfsTraversalStartingFromAllVertices(numberOfThreads)
+          //testGraph.bfsTraversalStartingFromAllVertices(numberOfThreads)
+          testGraphManyVertices.bfsTraversalStartingFromAllVertices(numberOfThreads)
         }._2
 
         println("MILLISECONDS ELAPSED FOR " + numberOfThreads + " THREADS: " + millisecondsElapsed)
@@ -86,10 +86,14 @@ class GraphTest extends FlatSpec with Matchers {
         acc + (numberOfThreads -> millisecondsElapsed)
       })
 
+    mapThreadsNumberToTimeElapsed.foreach(println)
+
+
+    // true shouldBe true
     mapThreadsNumberToTimeElapsed.foreach(pair => {
       mapThreadsNumberToTimeElapsed
         .filter(other => other._1 < pair._1)
-        .foreach(other => other._2 should be < pair._2)
+        .foreach(other => other._2 should be > pair._2)
     })
   }
 }
