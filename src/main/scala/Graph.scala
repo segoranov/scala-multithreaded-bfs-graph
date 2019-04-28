@@ -49,49 +49,51 @@ case class Graph(adjMatrix: AdjMatrix) {
       throw new IllegalArgumentException("Number of threads cannot be higher than the number of vertices!")
     }
 
-    var allTasks: Set[Future[(Path, ElapsedMilliSeconds)]] = Set.empty
+    var allFutures: Set[Future[(List[Path], ElapsedMilliSeconds, String)]] = Set.empty
+    var tasksForEachThread = List.range(0, getNumVertices).grouped(getNumVertices / numberOfThreads).toList
 
-    List.range(0, numberOfThreads - 1).foreach(threadNumber => {
-      // start new asynchronous task
-      val f: Future[(Path, ElapsedMilliSeconds)] = Future {
-        println("Thread " + threadNumber + " starts BFS from vertex " + threadNumber)
+    if (tasksForEachThread.size > numberOfThreads) {
+      tasksForEachThread = tasksForEachThread.dropRight(2) :+ (tasksForEachThread.dropRight(1).last ++ tasksForEachThread.last)
+    }
 
-        // use threadNumber as number of vertex
-        time {
-          bfsTraversalFrom(threadNumber)
+    println("Lists of vertices each thread work on: " + tasksForEachThread)
+
+    var numberOfActualThreadsUsed: Set[String] = Set.empty
+
+    tasksForEachThread.foreach(listOfVertices => {
+      val f: Future[(List[Path], ElapsedMilliSeconds, String)] = Future {
+        val result = time {
+          listOfVertices.foldLeft[List[Path]](List.empty)((acc, curVertex) => {
+            println("Thread " + Thread.currentThread.getName.split("-").last + " starts BFS from vertex " + curVertex)
+            bfsTraversalFrom(curVertex) :: acc
+          })
         }
+
+        (result._1.reverse, result._2, Thread.currentThread.getName.split("-").last)
       }
 
       // callback - when the task is completed
       f onComplete {
-        case Success(result) => println("Thread " + threadNumber
-          + " finished. Time elapsed milliseconds: " + result._2
-          + "; bfs result: " + result._1)
-        case Failure(t) => println("An error has occurred in thread " + threadNumber + ": " + t.getMessage)
+        case Success(result) => {
+          numberOfActualThreadsUsed += result._3
+          println("Thread " + result._3
+            + " finished. Time elapsed milliseconds: " + result._2
+            + "; bfs result: " + result._1)
+        }
+        case Failure(t) => println("An error has occurred: " + t.getMessage)
       }
 
-      allTasks += f
-    })
-
-    // continue synchronous work on main thread
-    List.range(numberOfThreads - 1, getNumVertices).foreach(vertex => {
-      println("Main thread starts BFS from vertex " + vertex)
-      val result = time {
-        bfsTraversalFrom(vertex)
-      }
-
-      println("Main thread finished. Time elapsed milliseconds: " + result._2
-        + "; bfs result: " + result._1)
+      allFutures += f
     })
 
     // wait for all futures to complete before exiting
     println("Waiting for all futures to complete")
-    allTasks.foreach(future => Await.ready(future, Duration.Inf))
+    allFutures.foreach(future => Await.ready(future, Duration.Inf))
+    Thread.sleep(3000)
+    println("Number of actual threads used in the computation: " + numberOfActualThreadsUsed.size)
   }
 
   def bfsTraversalFrom(start: Vertex): Path = {
-//    Thread.sleep(300)
-
     @tailrec
     def bfs(toVisit: Queue[Vertex], reached: Set[Vertex], path: Path): Path = {
       if (toVisit.isEmpty) path
