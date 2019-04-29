@@ -5,7 +5,7 @@ import graph.Graph._
 import scala.annotation.tailrec
 import scala.collection.immutable.Queue
 import scala.concurrent.{Await, Future}
-import scala.util.{Failure, Success}
+import scala.util.{Failure, Random, Success}
 import scala.concurrent.ExecutionContext.Implicits.global
 import Timer._
 
@@ -39,21 +39,21 @@ case class Graph(adjMatrix: AdjMatrix) {
 
   def printAdjMatrix = adjMatrix.foreach(println)
 
-  def bfsTraversalStartingFromAllVertices(numberOfThreads: Int) = {
-    if (numberOfThreads <= 0) {
-      throw new IllegalArgumentException("Number of threads in bfs traversal cannot be less than 1!")
+  def bfsTraversalStartingFromAllVertices(numberOfTasks: Int) = {
+    if (numberOfTasks < 1) {
+      throw new IllegalArgumentException("Number of tasks for bfs traversal cannot be less than 1!")
     }
 
-    val tasksForEachThread = getVerticesForEachThreadToWorkOn(numberOfThreads)
+    val verticesForEachTask = getVerticesForEachTaskToWorkOn(numberOfTasks)
 
-    println("Lists of vertices for each thread to work on: " + tasksForEachThread)
+    println("Lists of vertices for each task to work on: " + verticesForEachTask)
 
     import scala.collection.mutable.Set
 
     var actualThreadsUsed: Set[String] = Set.empty
     var allFutures: Set[Future[(ResultFromTask, TimeElapsedInMilliseconds, ThreadID)]] = Set.empty
 
-    tasksForEachThread.foreach(listOfVertices => {
+    verticesForEachTask.foreach(listOfVertices => {
       val future = startNewTask(listOfVertices)
       allFutures += future
 
@@ -108,14 +108,14 @@ case class Graph(adjMatrix: AdjMatrix) {
     }
   }
 
-  private def getVerticesForEachThreadToWorkOn(numberOfThreads: Int): List[List[Vertex]] = {
-    var tasksForEachThread = List.range(0, getNumVertices).grouped(getNumVertices / numberOfThreads).toList
+  private def getVerticesForEachTaskToWorkOn(numberOfTasks: Int): List[List[Vertex]] = {
+    var verticesForEachTask = List.range(0, getNumVertices).grouped(getNumVertices / numberOfTasks).toList
 
-    if (tasksForEachThread.size > numberOfThreads) {
-      tasksForEachThread = tasksForEachThread.dropRight(2) :+ (tasksForEachThread.dropRight(1).last ++ tasksForEachThread.last)
+    if (verticesForEachTask.size > numberOfTasks) {
+      verticesForEachTask = verticesForEachTask.dropRight(2) :+ (verticesForEachTask.dropRight(1).last ++ verticesForEachTask.last)
     }
 
-    tasksForEachThread
+    verticesForEachTask
   }
 
 }
@@ -170,6 +170,14 @@ case object Graph {
         .map(row => row.map(_.toInt))
 
     new Graph(adjMatrix)
+  }
+
+  def withRandomEdges(numberOfVertices: Int) = {
+    if (numberOfVertices < 0) {
+      throw new IllegalArgumentException("Graph cannot have negative number of vertices!")
+    }
+
+    new Graph(List.fill(numberOfVertices)(List.fill(numberOfVertices)(Random.nextInt(2))))
   }
 }
 

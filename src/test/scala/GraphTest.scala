@@ -5,8 +5,6 @@ import graph.Timer.{TimeElapsedInMilliseconds, time}
 import org.scalatest.{FlatSpec, Matchers}
 import java.io.{File, PrintWriter}
 
-import scala.util.Random
-
 class GraphTest extends FlatSpec with Matchers {
 
   val testGraph = Graph(AdjMatrix(
@@ -23,7 +21,7 @@ class GraphTest extends FlatSpec with Matchers {
     Row(0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0)
   ))
 
-  val testGraphManyVertices = Graph(List.fill(200)(List.fill(200)(Random.nextInt(2))))
+  val testGraphManyVertices = Graph.withRandomEdges(numberOfVertices = 200)
 
   "all vertices" should "be from 0 to 10" in {
     testGraph.getVertices shouldBe List.range(0, 11).toSet
@@ -73,18 +71,17 @@ class GraphTest extends FlatSpec with Matchers {
   }
 
   "bfs traversal starting from all vertices" should
-    "be faster when the threads are more but not more than available processors" in {
-    type NumberOfThreads = Int
+    "be faster when the threads (tasks) are more but not more than the available processors" in {
+    type NumberOfTasks = Int
 
     val mapNumberOfThreadsToTimeElapsed =
       List.range(1, Runtime.getRuntime.availableProcessors + 1)
-        .foldLeft[Map[NumberOfThreads, TimeElapsedInMilliseconds]](Map.empty)((acc, numberOfThreads) => {
+        .foldLeft[Map[NumberOfTasks, TimeElapsedInMilliseconds]](Map.empty)((acc, numberOfTasks) => {
 
         val millisecondsElapsed = time {
-          //testGraph.bfsTraversalStartingFromAllVertices(numberOfThreads)
-          testGraphManyVertices.bfsTraversalStartingFromAllVertices(numberOfThreads)
+          testGraphManyVertices.bfsTraversalStartingFromAllVertices(numberOfTasks)
         }._2
-        acc + (numberOfThreads -> millisecondsElapsed)
+        acc + (numberOfTasks -> millisecondsElapsed)
       })
 
     mapNumberOfThreadsToTimeElapsed.foreach(println)
