@@ -151,5 +151,25 @@ case object Graph {
     checkAdjMatrixValidity
     new Graph(adjMatrix)
   }
+
+  // sample file format for graph with 3 vertices:
+  // 3
+  // 0 1 0
+  // 1 0 1
+  // 0 0 1
+  def fromFile(file: String) = {
+    val fileSource = scala.io.Source.fromFile(file)
+    val fileContent = fileSource.getLines.toList
+
+    fileSource.close
+
+    val adjMatrix =
+      fileContent.tail // size of the matrix is not needed, ignore it
+        .map(_.split(" "))
+        .map(_.toList)
+        .map(row => row.map(_.toInt))
+
+    new Graph(adjMatrix)
+  }
 }
 

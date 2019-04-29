@@ -1,8 +1,9 @@
 package graph
 
-import graph.Graph.{AdjMatrix, Path, Row}
+import graph.Graph.{AdjMatrix, Row}
 import graph.Timer.{TimeElapsedInMilliseconds, time}
 import org.scalatest.{FlatSpec, Matchers}
+import java.io.{File, PrintWriter}
 
 import scala.util.Random
 
@@ -93,5 +94,33 @@ class GraphTest extends FlatSpec with Matchers {
         .filter(other => other._1 < pair._1)
         .foreach(other => other._2 should be > pair._2)
     })
+  }
+
+  "reading graph from file" should "be correct" in {
+
+    var fileContent =
+      """11
+0 1 1 1 1 1 0 0 0 0 0
+1 0 0 0 0 0 1 0 0 0 0
+1 0 0 0 0 0 0 0 0 0 0
+1 0 0 0 0 0 0 0 1 1 0
+1 0 0 0 0 1 0 0 0 0 0
+1 0 0 0 1 0 0 0 0 0 1
+0 1 0 0 0 0 0 1 0 0 0
+0 0 0 0 0 0 1 0 0 0 0
+0 0 0 1 0 0 0 0 0 0 0
+0 0 0 1 0 0 0 0 0 0 0
+0 0 0 0 0 1 0 0 0 0 0"""
+
+    val fileName = "testGraph.txt"
+
+    new PrintWriter(fileName) {
+      write(fileContent)
+      close
+    }
+
+    Graph.fromFile(fileName) shouldBe testGraph
+
+    new File(fileName).delete
   }
 }
