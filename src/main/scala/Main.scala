@@ -1,7 +1,6 @@
 package graph
 
 import graph.Graph.{AdjMatrix, Row}
-import scala.util.Random
 import Timer.time
 
 object Test {
@@ -21,12 +20,21 @@ object Test {
       Row(0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0)
     ))
 
-    val testGraphManyVertices = Graph(List.fill(2000)(List.fill(2000)(Random.nextInt(2))))
+    val testGraphManyVertices = Graph.withRandomEdges(numberOfVertices = 200)
 
-    val result = time {
-      testGraph.bfsTraversalStartingFromAllVertices(numberOfTasks = 4)
+    val result1 = time {
+      testGraphManyVertices.bfsTraversalStartingFromAllVertices(numberOfTasks = 1)
     }
 
-    println("Time taken for all the tasks to finish in milliseconds: " + result._2)
+    val result2 = time {
+      testGraphManyVertices.bfsTraversalStartingFromAllVertices(numberOfTasks = 10)
+    }
+
+    val result3 = time {
+      testGraphManyVertices.bfsTraversalStartingFromAllVertices(numberOfTasks = 20)
+    }
+
+    println("Time taken for all the tasks to finish in milliseconds: 1 thread -> " + result1._2
+      + "; 10 threads -> " + result2._2 + "; 20 threads -> " + result3._2)
   }
 }

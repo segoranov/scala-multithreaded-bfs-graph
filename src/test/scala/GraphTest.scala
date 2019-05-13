@@ -71,11 +71,11 @@ class GraphTest extends FlatSpec with Matchers {
   }
 
   "bfs traversal starting from all vertices" should
-    "be faster when the threads (tasks) are more but not more than the available processors" in {
+    "be faster when the threads (tasks) are more" in {
     type NumberOfTasks = Int
 
     val mapNumberOfThreadsToTimeElapsed =
-      List.range(1, Runtime.getRuntime.availableProcessors + 1)
+      List.range(1, Runtime.getRuntime.availableProcessors)
         .foldLeft[Map[NumberOfTasks, TimeElapsedInMilliseconds]](Map.empty)((acc, numberOfTasks) => {
 
         val millisecondsElapsed = time {

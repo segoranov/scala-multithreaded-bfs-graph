@@ -1,12 +1,13 @@
 package graph
 
+import java.util.concurrent.Executors
+
 import graph.Graph._
 
 import scala.annotation.tailrec
 import scala.collection.immutable.Queue
-import scala.concurrent.{Await, Future}
+import scala.concurrent.{Await, ExecutionContext, Future}
 import scala.util.{Failure, Random, Success}
-import scala.concurrent.ExecutionContext.Implicits.global
 import Timer._
 
 import scala.concurrent.duration.Duration
@@ -40,6 +41,8 @@ case class Graph(adjMatrix: AdjMatrix) {
   def printAdjMatrix = adjMatrix.foreach(println)
 
   def bfsTraversalStartingFromAllVertices(numberOfTasks: Int) = {
+    implicit val ec = ExecutionContext.fromExecutor(Executors.newFixedThreadPool(numberOfTasks))
+
     if (numberOfTasks < 1) {
       throw new IllegalArgumentException("Number of tasks for bfs traversal cannot be less than 1!")
     }
@@ -95,7 +98,7 @@ case class Graph(adjMatrix: AdjMatrix) {
     bfs(Queue(start), Set(start), List.empty).reverse
   }
 
-  private def startNewTask(listOfVertices: List[Vertex]): Future[(ResultFromTask, TimeElapsedInMilliseconds, ThreadID)] = {
+  private def startNewTask(listOfVertices: List[Vertex])(implicit ec: ExecutionContext): Future[(ResultFromTask, TimeElapsedInMilliseconds, ThreadID)] = {
     Future {
       val result = time {
         listOfVertices.foldLeft[List[Path]](List.empty)((acc, curVertex) => {
