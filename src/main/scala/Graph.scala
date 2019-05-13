@@ -40,57 +40,42 @@ case class Graph(adjMatrix: AdjMatrix) {
 
   def printAdjMatrix = adjMatrix.foreach(println)
 
-  def bfsTraversalStartingFromAllVertices(numberOfTasks: Int) = {
+  def bfsTraversalStartingFromAllVertices(numberOfTasks: Int): TimeElapsedInMilliseconds = {
     implicit val ec = ExecutionContext.fromExecutor(Executors.newFixedThreadPool(numberOfTasks))
 
     if (numberOfTasks < 1) {
       throw new IllegalArgumentException("Number of tasks for bfs traversal cannot be less than 1!")
     }
 
-    val verticesForEachTask = getVerticesForEachTaskToWorkOn(numberOfTasks)
-
-    println("Lists of vertices for each task to work on: " + verticesForEachTask)
-
     import scala.collection.mutable.Set
 
     var actualThreadsUsed: Set[String] = Set.empty
     var allFutures: Set[Future[(ResultFromTask, TimeElapsedInMilliseconds, ThreadID)]] = Set.empty
 
-    verticesForEachTask.foreach(listOfVertices => {
-      val future = startNewTask(listOfVertices)
-      allFutures += future
+    val totalTimeElapsed = time {
+      getVertices.foreach(vertex => {
+        val future = startNewTask(vertex)
+        allFutures += future
 
-      future onComplete {
-        case Success(result) => {
-          actualThreadsUsed += result._3
-          println("Thread " + result._3
-            + " finished. Time elapsed milliseconds: " + result._2
-            + "; bfs result: " + result._1)
+        future onComplete {
+          case Success(result) => {
+            actualThreadsUsed += result._3
+            println("Thread " + result._3
+              + " finished. Time elapsed milliseconds: " + result._2
+              + "; bfs result: " + result._1)
+          }
+          case Failure(t) => println("An error has occurred: " + t.getMessage)
         }
-        case Failure(t) => println("An error has occurred: " + t.getMessage)
-      }
-    })
-//    getVertices.foreach(vertice => {
-//      val future = startNewTask(List(vertice))
-//      allFutures += future
-//
-//      future onComplete {
-//        case Success(result) => {
-//          actualThreadsUsed += result._3
-//          println("Thread " + result._3
-//            + " finished. Time elapsed milliseconds: " + result._2
-//            + "; bfs result: " + result._1)
-//        }
-//        case Failure(t) => println("An error has occurred: " + t.getMessage)
-//      }
-//    })
+      })
 
-    allFutures.foreach(future => Await.ready(future, Duration.Inf))
+      allFutures.foreach(future => Await.ready(future, Duration.Inf))
+    }._2
 
     // give some time for the callbacks to print the results; probably not the best way but for now it works
     Thread.sleep(1500)
 
     println("Number of actual threads used in the computation: " + actualThreadsUsed.size)
+    totalTimeElapsed
   }
 
   def bfsTraversalFrom(start: Vertex): Path = {
@@ -112,29 +97,16 @@ case class Graph(adjMatrix: AdjMatrix) {
     bfs(Queue(start), Set(start), List.empty).reverse
   }
 
-  private def startNewTask(listOfVertices: List[Vertex])(implicit ec: ExecutionContext): Future[(ResultFromTask, TimeElapsedInMilliseconds, ThreadID)] = {
+  private def startNewTask(vertex: Vertex)(implicit ec: ExecutionContext): Future[(ResultFromTask, TimeElapsedInMilliseconds, ThreadID)] = {
     Future {
       val result = time {
-        listOfVertices.foldLeft[List[Path]](List.empty)((acc, curVertex) => {
-          println("Thread " + Thread.currentThread.getName.split("-").last + " starts BFS from vertex " + curVertex)
-          bfsTraversalFrom(curVertex) :: acc
-        })
+        println("Thread " + Thread.currentThread.getName.split("-").last + " starts BFS from vertex " + vertex)
+        bfsTraversalFrom(vertex)
       }
 
-      (result._1.reverse, result._2, Thread.currentThread.getName.split("-").last)
+      (result._1, result._2, Thread.currentThread.getName.split("-").last)
     }
   }
-
-  private def getVerticesForEachTaskToWorkOn(numberOfTasks: Int): List[List[Vertex]] = {
-    var verticesForEachTask = List.range(0, getNumVertices).grouped(getNumVertices / numberOfTasks).toList
-
-    if (verticesForEachTask.size > numberOfTasks) {
-      verticesForEachTask = verticesForEachTask.dropRight(2) :+ (verticesForEachTask.dropRight(1).last ++ verticesForEachTask.last)
-    }
-
-    verticesForEachTask
-  }
-
 }
 
 case object Graph {
@@ -150,7 +122,7 @@ case object Graph {
   type Path = List[Vertex]
 
   private type ThreadID = String
-  private type ResultFromTask = List[Path]
+  private type ResultFromTask = Path
 
   def apply(adjMatrix: AdjMatrix): Graph = {
     def checkAdjMatrixValidity = {

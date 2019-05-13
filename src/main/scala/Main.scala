@@ -22,19 +22,11 @@ object Test {
 
     val testGraphManyVertices = Graph.withRandomEdges(numberOfVertices = 200)
 
-    val result1 = time {
-      testGraphManyVertices.bfsTraversalStartingFromAllVertices(numberOfTasks = 1)
-    }
+    val time1 = testGraphManyVertices.bfsTraversalStartingFromAllVertices(numberOfTasks = 1)
+    val time2 = testGraphManyVertices.bfsTraversalStartingFromAllVertices(numberOfTasks = 10)
+    val time3 = testGraphManyVertices.bfsTraversalStartingFromAllVertices(numberOfTasks = 20)
 
-    val result2 = time {
-      testGraphManyVertices.bfsTraversalStartingFromAllVertices(numberOfTasks = 10)
-    }
-
-    val result3 = time {
-      testGraphManyVertices.bfsTraversalStartingFromAllVertices(numberOfTasks = 20)
-    }
-
-    println("Time taken for all the tasks to finish in milliseconds: 1 thread -> " + result1._2
-      + "; 10 threads -> " + result2._2 + "; 20 threads -> " + result3._2)
+    println("Time taken for all the tasks to finish in milliseconds: 1 thread -> " + time1
+      + "; 10 threads -> " + time2 + "; 20 threads -> " + time3)
   }
 }
