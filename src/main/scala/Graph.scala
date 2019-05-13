@@ -70,6 +70,20 @@ case class Graph(adjMatrix: AdjMatrix) {
         case Failure(t) => println("An error has occurred: " + t.getMessage)
       }
     })
+//    getVertices.foreach(vertice => {
+//      val future = startNewTask(List(vertice))
+//      allFutures += future
+//
+//      future onComplete {
+//        case Success(result) => {
+//          actualThreadsUsed += result._3
+//          println("Thread " + result._3
+//            + " finished. Time elapsed milliseconds: " + result._2
+//            + "; bfs result: " + result._1)
+//        }
+//        case Failure(t) => println("An error has occurred: " + t.getMessage)
+//      }
+//    })
 
     allFutures.foreach(future => Await.ready(future, Duration.Inf))
 
