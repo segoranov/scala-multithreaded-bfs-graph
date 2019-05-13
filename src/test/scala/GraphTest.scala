@@ -78,13 +78,9 @@ class GraphTest extends FlatSpec with Matchers {
       List.range(1, Runtime.getRuntime.availableProcessors)
         .foldLeft[Map[NumberOfTasks, TimeElapsedInMilliseconds]](Map.empty)((acc, numberOfTasks) => {
 
-        val millisecondsElapsed = time {
-          testGraphManyVertices.bfsTraversalStartingFromAllVertices(numberOfTasks)
-        }._2
+        val millisecondsElapsed = testGraphManyVertices.bfsTraversalStartingFromAllVertices(numberOfTasks)
         acc + (numberOfTasks -> millisecondsElapsed)
       })
-
-    mapNumberOfThreadsToTimeElapsed.foreach(println)
 
     mapNumberOfThreadsToTimeElapsed.foreach(pair => {
       mapNumberOfThreadsToTimeElapsed
