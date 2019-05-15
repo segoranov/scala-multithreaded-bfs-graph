@@ -44,7 +44,8 @@ case class Graph(adjMatrix: AdjMatrix) {
   def bfsTraversalStartingFromAllVertices(numberOfTasks: Int): (Set[ResultFromTask], TimeElapsedInMilliseconds) = {
     println("Starting BFS traversal from all vertices with number of tasks: " + numberOfTasks)
 
-    implicit val ec = ExecutionContext.fromExecutor(Executors.newFixedThreadPool(numberOfTasks))
+    val threadPool = Executors.newFixedThreadPool(numberOfTasks)
+    implicit val ec = ExecutionContext.fromExecutor(threadPool)
 
     if (numberOfTasks < 1) {
       throw new IllegalArgumentException("Number of tasks for bfs traversal cannot be less than 1!")
@@ -56,6 +57,8 @@ case class Graph(adjMatrix: AdjMatrix) {
 
     println("Total number of threads used in current run: " + result._1.map(_.threadID).size)
     println("Total time elapsed (milliseconds) in current run: " + result._2)
+
+    threadPool.shutdown
 
     result
   }
