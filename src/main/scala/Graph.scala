@@ -3,14 +3,15 @@ package graph
 import java.util.concurrent.Executors
 
 import graph.Graph._
+import graph.Timer._
 
 import scala.annotation.tailrec
 import scala.collection.immutable.Queue
-import scala.concurrent.{Await, ExecutionContext, Future}
-import scala.util.{Failure, Random, Success}
-import Timer._
-
 import scala.concurrent.duration.Duration
+import scala.concurrent.{Await, ExecutionContext, Future}
+import scala.util.Random
+
+case class ResultFromTask(generatedBFSPath: Path, timeForCompletionInMilliseconds: TimeElapsedInMilliseconds, threadID: Long)
 
 case class Graph(adjMatrix: AdjMatrix) {
 
@@ -20,7 +21,7 @@ case class Graph(adjMatrix: AdjMatrix) {
 
   def hasVertex(v: Vertex) = 0 <= v && v <= adjMatrix.size - 1
 
-  def isEdge(v1: Vertex, v2: Vertex): Either[String, Boolean] = {
+  def hasEdge(v1: Vertex, v2: Vertex): Either[String, Boolean] = {
     if (!hasVertex(v1))
       Left("Vertex " + v1 + " is not in the graph.")
     else if (!hasVertex(v2))
@@ -40,45 +41,26 @@ case class Graph(adjMatrix: AdjMatrix) {
 
   def printAdjMatrix = adjMatrix.foreach(println)
 
-  def bfsTraversalStartingFromAllVertices(numberOfTasks: Int): TimeElapsedInMilliseconds = {
+  def bfsTraversalStartingFromAllVertices(numberOfTasks: Int): (Set[ResultFromTask], TimeElapsedInMilliseconds) = {
+    println("Starting BFS traversal from all vertices with number of tasks: " + numberOfTasks)
+
     implicit val ec = ExecutionContext.fromExecutor(Executors.newFixedThreadPool(numberOfTasks))
 
     if (numberOfTasks < 1) {
       throw new IllegalArgumentException("Number of tasks for bfs traversal cannot be less than 1!")
     }
 
-    import scala.collection.mutable.Set
+    val result = time {
+      getVertices.map(start_BFS_task_from_vertex(_)).map(Await.result(_, Duration.Inf))
+    }
 
-    var actualThreadsUsed: Set[String] = Set.empty
-    var allFutures: Set[Future[(ResultFromTask, TimeElapsedInMilliseconds, ThreadID)]] = Set.empty
+    println("Total number of threads used in current run: " + result._1.map(_.threadID).size)
+    println("Total time elapsed (milliseconds) in current run: " + result._2)
 
-    val totalTimeElapsed = time {
-      getVertices.foreach(vertex => {
-        val future = startNewTask(vertex)
-        allFutures += future
-
-        future onComplete {
-          case Success(result) => {
-            actualThreadsUsed += result._3
-            println("Thread " + result._3
-              + " finished. Time elapsed milliseconds: " + result._2
-              + "; bfs result: " + result._1)
-          }
-          case Failure(t) => println("An error has occurred: " + t.getMessage)
-        }
-      })
-
-      allFutures.foreach(future => Await.ready(future, Duration.Inf))
-    }._2
-
-    // give some time for the callbacks to print the results; probably not the best way but for now it works
-    Thread.sleep(1500)
-
-    println("Number of actual threads used in the computation: " + actualThreadsUsed.size)
-    totalTimeElapsed
+    result
   }
 
-  def bfsTraversalFrom(start: Vertex): Path = {
+  private[graph] def bfsTraversalFrom(start: Vertex): Path = {
     @tailrec
     def bfs(toVisit: Queue[Vertex], reached: Set[Vertex], path: Path): Path = {
       if (toVisit.isEmpty) path
@@ -97,15 +79,18 @@ case class Graph(adjMatrix: AdjMatrix) {
     bfs(Queue(start), Set(start), List.empty).reverse
   }
 
-  private def startNewTask(vertex: Vertex)(implicit ec: ExecutionContext): Future[(ResultFromTask, TimeElapsedInMilliseconds, ThreadID)] = {
-    Future {
-      val result = time {
-        println("Thread " + Thread.currentThread.getName.split("-").last + " starts BFS from vertex " + vertex)
-        bfsTraversalFrom(vertex)
-      }
+  private def start_BFS_task_from_vertex(startingVertex: Vertex)(implicit ec: ExecutionContext): Future[ResultFromTask] = Future {
+    val currentThreadID = Thread.currentThread.getName.split("-").last.toLong
 
-      (result._1, result._2, Thread.currentThread.getName.split("-").last)
+//    println("Thread " + currentThreadID + " starts BFS from vertex " + startingVertex)
+    val result = time {
+      bfsTraversalFrom(startingVertex)
     }
+
+//    println("Thread " + currentThreadID + " finished BFS started from vertex " + startingVertex
+//      + ". Time elapsed in milliseconds: " + result._2)
+
+    ResultFromTask(result._1, result._2, currentThreadID)
   }
 }
 
@@ -120,9 +105,6 @@ case object Graph {
 
   type Vertex = Int
   type Path = List[Vertex]
-
-  private type ThreadID = String
-  private type ResultFromTask = Path
 
   def apply(adjMatrix: AdjMatrix): Graph = {
     def checkAdjMatrixValidity = {

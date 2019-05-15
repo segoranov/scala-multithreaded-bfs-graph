@@ -38,15 +38,17 @@ class GraphTest extends FlatSpec with Matchers {
   }
 
   "edges" should "either exists or not exist" in {
-    testGraph.isEdge(0, 1) shouldBe Right(true)
-    testGraph.isEdge(0, 0) shouldBe Right(false)
+    testGraph.hasEdge(0, 1) shouldBe Right(true)
+    testGraph.hasEdge(0, 0) shouldBe Right(false)
 
     testGraph.getVertices.foreach(vertex => {
       if (vertex == 5)
-        testGraph.isEdge(10, vertex) shouldBe Right(true)
+        testGraph.hasEdge(10, vertex) shouldBe Right(true)
       else
-        testGraph.isEdge(10, vertex) shouldBe Right(false)
+        testGraph.hasEdge(10, vertex) shouldBe Right(false)
     })
+
+    testGraph.hasEdge(-5, 205) shouldBe Left("Vertex " + -5 + " is not in the graph.")
   }
 
   "graph" should "be incorrect and throw exception" in {
@@ -74,14 +76,16 @@ class GraphTest extends FlatSpec with Matchers {
     "be faster when the threads (tasks) are more" in {
     type NumberOfTasks = Int
 
+    // create no more tasks than the number of available processors, it is of no use
     val mapNumberOfThreadsToTimeElapsed =
-      List.range(1, Runtime.getRuntime.availableProcessors)
+      List.range(1, Runtime.getRuntime.availableProcessors + 1)
         .foldLeft[Map[NumberOfTasks, TimeElapsedInMilliseconds]](Map.empty)((acc, numberOfTasks) => {
 
-        val millisecondsElapsed = testGraphManyVertices.bfsTraversalStartingFromAllVertices(numberOfTasks)
+        val millisecondsElapsed = testGraphManyVertices.bfsTraversalStartingFromAllVertices(numberOfTasks)._2
         acc + (numberOfTasks -> millisecondsElapsed)
       })
 
+    // less threads should spent more time on the task
     mapNumberOfThreadsToTimeElapsed.foreach(pair => {
       mapNumberOfThreadsToTimeElapsed
         .filter(other => other._1 < pair._1)

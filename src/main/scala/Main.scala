@@ -1,7 +1,6 @@
 package graph
 
 import graph.Graph.{AdjMatrix, Row}
-import Timer.time
 
 object Test {
 
@@ -22,11 +21,25 @@ object Test {
 
     val testGraphManyVertices = Graph.withRandomEdges(numberOfVertices = 200)
 
-    val time1 = testGraphManyVertices.bfsTraversalStartingFromAllVertices(numberOfTasks = 1)
-    val time2 = testGraphManyVertices.bfsTraversalStartingFromAllVertices(numberOfTasks = 10)
-    val time3 = testGraphManyVertices.bfsTraversalStartingFromAllVertices(numberOfTasks = 20)
+    testGraphManyVertices.bfsTraversalStartingFromAllVertices(numberOfTasks = 1)
+    testGraphManyVertices.bfsTraversalStartingFromAllVertices(numberOfTasks = 2)
+    testGraphManyVertices.bfsTraversalStartingFromAllVertices(numberOfTasks = 3)
+    testGraphManyVertices.bfsTraversalStartingFromAllVertices(numberOfTasks = 4)
+    testGraphManyVertices.bfsTraversalStartingFromAllVertices(numberOfTasks = 100)
 
-    println("Time taken for all the tasks to finish in milliseconds: 1 thread -> " + time1
-      + "; 10 threads -> " + time2 + "; 20 threads -> " + time3)
+
+    // QUESTIONS:
+    // 0. Is my logic correct: If all threads in the pool are busy,
+    // Futures (tasks) will wait in a queue for the thread pool to free some thread.
+
+    // 1. Why the fuck with 100 tasks is faster than with 4 tasks???
+
+    // 2. How come when I start 100 tasks, the program uses 100 threads, when I have 4 cores?
+
+    // 3. Why is the program not terminating - probably some thread is still running, but which one???
+
+    // TODO:
+    //  Logging to a file - thread stars, thread finishes, etc...
+    //  Command line parameters
   }
 }
