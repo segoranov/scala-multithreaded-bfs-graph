@@ -90,7 +90,7 @@ object GraphApp {
       val outputFile = options('o).asInstanceOf[String]
       val pw = new PrintWriter(outputFile)
       pw.write("All generated paths:\n")
-      result._1.foreach(resultFromTask => pw.write(resultFromTask.generatedBFSPath.mkString("", " ", "\n")))
+      result._1.foreach(resultFromTask => pw.write(resultFromTask.generatedBFSPath.mkString("Path:\n", " ", "\n\n")))
       pw.close
     }
 
