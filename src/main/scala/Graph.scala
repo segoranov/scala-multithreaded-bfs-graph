@@ -10,10 +10,11 @@ import scala.collection.immutable.Queue
 import scala.concurrent.duration.Duration
 import scala.concurrent.{Await, ExecutionContext, Future}
 import scala.util.Random
+import com.typesafe.scalalogging._
 
 case class ResultFromTask(generatedBFSPath: Path, timeForCompletionInMilliseconds: TimeElapsedInMilliseconds, threadID: Long)
 
-case class Graph(adjMatrix: AdjMatrix) {
+case class Graph(adjMatrix: AdjMatrix) extends LazyLogging {
 
   def getVertices: Set[Vertex] = if (adjMatrix.isEmpty) Set.empty else List.range(0, adjMatrix.size).toSet
 
@@ -42,7 +43,7 @@ case class Graph(adjMatrix: AdjMatrix) {
   def printAdjMatrix = adjMatrix.foreach(println)
 
   def bfsTraversalStartingFromAllVertices(numberOfTasks: Int): (Set[ResultFromTask], TimeElapsedInMilliseconds) = {
-    println("Starting BFS traversal from all vertices with number of tasks: " + numberOfTasks)
+    logger.debug("Starting BFS traversal from all vertices with number of tasks: " + numberOfTasks)
 
     val threadPool = Executors.newFixedThreadPool(numberOfTasks)
     implicit val ec = ExecutionContext.fromExecutor(threadPool)
@@ -55,8 +56,8 @@ case class Graph(adjMatrix: AdjMatrix) {
       getVertices.map(start_BFS_task_from_vertex(_)).map(Await.result(_, Duration.Inf))
     }
 
-    println("Total number of threads used in current run: " + result._1.map(_.threadID).size)
-    println("Total time elapsed (milliseconds) in current run: " + result._2)
+    logger.debug("Total number of threads used in current run: " + result._1.map(_.threadID).size)
+    logger.debug("Total time elapsed (milliseconds) in current run: " + result._2)
 
     threadPool.shutdown
 
@@ -83,17 +84,15 @@ case class Graph(adjMatrix: AdjMatrix) {
   }
 
   private def start_BFS_task_from_vertex(startingVertex: Vertex)(implicit ec: ExecutionContext): Future[ResultFromTask] = Future {
-    val currentThreadID = Thread.currentThread.getName.split("-").last.toLong
-
-//    println("Thread " + currentThreadID + " starts BFS from vertex " + startingVertex)
+    logger.debug("Start BFS from vertex " + startingVertex)
     val result = time {
       bfsTraversalFrom(startingVertex)
     }
 
-//    println("Thread " + currentThreadID + " finished BFS started from vertex " + startingVertex
-//      + ". Time elapsed in milliseconds: " + result._2)
+    logger.debug("Finish BFS started from vertex " + startingVertex
+      + ". Time elapsed in milliseconds: " + result._2)
 
-    ResultFromTask(result._1, result._2, currentThreadID)
+    ResultFromTask(result._1, result._2, Thread.currentThread.getName.split("-").last.toLong)
   }
 }
 
