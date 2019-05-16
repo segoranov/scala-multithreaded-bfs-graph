@@ -21,7 +21,7 @@ class GraphTest extends FlatSpec with Matchers {
     Row(0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0)
   ))
 
-  val testGraphManyVertices = Graph.withRandomEdges(numberOfVertices = 200)
+  val testGraphManyVertices = Graph.withRandomEdges(numberOfVertices = 300)
 
   "all vertices" should "be from 0 to 10" in {
     testGraph.getVertices shouldBe List.range(0, 11).toSet
