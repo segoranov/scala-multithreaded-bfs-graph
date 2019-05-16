@@ -1,5 +1,7 @@
 package graph
 
+import java.io.PrintWriter
+
 object GraphApp {
 
   val usage =
@@ -66,28 +68,34 @@ object GraphApp {
 
     val options = nextOption(Map.empty, arglist)
 
-    println(options)
-
     val runQuietly = options.contains('q)
     val readGraphFromFile = options.contains('i)
 
     val numberOfTasks = options('t).asInstanceOf[Int]
 
-    if (readGraphFromFile) {
-      val file = options('i).asInstanceOf[String]
-      val graph = Graph.fromFile(file)
+    var graph = Graph.empty
 
-      graph.bfsTraversalStartingFromAllVertices(numberOfTasks)
+    if (readGraphFromFile) {
+      val inputFile = options('i).asInstanceOf[String]
+      graph = Graph.fromFile(inputFile)
     }
     else {
       val numberOfVertices = options('n).asInstanceOf[Int]
-      val graph = Graph.withRandomEdges(numberOfVertices)
+      graph = Graph.withRandomEdges(numberOfVertices)
+    }
 
-      graph.bfsTraversalStartingFromAllVertices(numberOfTasks)
+    val result = graph.bfsTraversalStartingFromAllVertices(numberOfTasks)
+
+    if (options.contains('o)) {
+      val outputFile = options('o).asInstanceOf[String]
+      val pw = new PrintWriter(outputFile)
+      pw.write("All generated paths:\n")
+      result._1.foreach(resultFromTask => pw.write(resultFromTask.generatedBFSPath.mkString("", " ", "\n")))
+      pw.close
     }
 
     // TODO:
-    //  Implement -q and -o, currently they are just ignored.
+    //  Implement -q (quiet), currently it is just ignored.
     //  Documentation - detailed and desriptive!
   }
 }

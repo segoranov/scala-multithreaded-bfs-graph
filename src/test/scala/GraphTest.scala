@@ -120,4 +120,8 @@ class GraphTest extends FlatSpec with Matchers {
 
     new File(fileName).delete
   }
+
+  "empty graph" should "have 0 vertices" in {
+    Graph.empty.getNumVertices shouldBe 0
+  }
 }

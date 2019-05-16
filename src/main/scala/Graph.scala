@@ -152,5 +152,7 @@ case object Graph {
 
     new Graph(List.fill(numberOfVertices)(List.fill(numberOfVertices)(Random.nextInt(2))))
   }
+
+  def empty = new Graph(List.empty)
 }
 
