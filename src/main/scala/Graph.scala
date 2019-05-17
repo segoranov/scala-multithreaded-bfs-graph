@@ -40,9 +40,9 @@ case class Graph(adjMatrix: AdjMatrix) extends LazyLogging {
     }
   }
 
-  def printAdjMatrix = adjMatrix.foreach(println)
+  override def toString = adjMatrix.map(_.mkString("(", ",", ")")).reduceLeft(_ + "\n" + _)
 
-  def bfsTraversalStartingFromAllVertices(numberOfTasks: Int): (Set[ResultFromTask], TimeElapsedInMilliseconds) = {
+  def bfsTraversalStartingFromAllVertices(numberOfTasks: Int): BFSTraversalFromAllVerticesResult = {
     logger.debug("Starting BFS traversal from all vertices (" + getNumVertices + ") with number of tasks: " + numberOfTasks)
 
     val threadPool = Executors.newFixedThreadPool(numberOfTasks)
@@ -107,6 +107,8 @@ case object Graph {
 
   type Vertex = Int
   type Path = List[Vertex]
+
+  type BFSTraversalFromAllVerticesResult = (Set[ResultFromTask], TimeElapsedInMilliseconds)
 
   def apply(adjMatrix: AdjMatrix): Graph = {
     def checkAdjMatrixValidity = {

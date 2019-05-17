@@ -78,7 +78,7 @@ class GraphTest extends FlatSpec with Matchers {
 
     // create no more tasks than the number of available processors - 1, it is of no use
     val mapNumberOfThreadsToTimeElapsed =
-      List.range(1, Runtime.getRuntime.availableProcessors )
+      List.range(1, Runtime.getRuntime.availableProcessors)
         .foldLeft[Map[NumberOfTasks, TimeElapsedInMilliseconds]](Map.empty)((acc, numberOfTasks) => {
 
         val millisecondsElapsed = testGraphManyVertices.bfsTraversalStartingFromAllVertices(numberOfTasks)._2
@@ -123,5 +123,19 @@ class GraphTest extends FlatSpec with Matchers {
 
   "empty graph" should "have 0 vertices" in {
     Graph.empty.getNumVertices shouldBe 0
+  }
+
+  "command line arguments" should "be invalid in" in {
+    GraphApp.processCommandLineArguments(List("-i", "graph-in.txt", "-n", "1024", "-t", "25")) shouldBe None
+    GraphApp.processCommandLineArguments(List("-i", "graph-in.txt", "-n", "1024", "-t", "")) shouldBe None
+    GraphApp.processCommandLineArguments(List("-i", "graph-in.txt", "-n", "1024")) shouldBe None
+    GraphApp.processCommandLineArguments(List("-i", "__NON_FUCKING_EXISTENT_FILE___", "-t", "25")) shouldBe None
+    GraphApp.processCommandLineArguments(List("-n", "125", "-q", "-t", "25asd")) shouldBe None
+  }
+
+  it should "be valid" in {
+    GraphApp.processCommandLineArguments(List("-n", "125", "-o", "output.txt", "-t", "25")) should not be None
+    GraphApp.processCommandLineArguments(List("-n", "125", "-t", "25")) should not be None
+    GraphApp.processCommandLineArguments(List("-n", "125", "-q", "-t", "25")) should not be None
   }
 }
