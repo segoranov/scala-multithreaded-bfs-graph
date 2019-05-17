@@ -21,9 +21,9 @@ object GraphApp extends LazyLogging {
            java -jar <file.jar> -n <number_of_vertices> -t <number of tasks> [-o <graph-data.out>] [-q]
 
     Mandatory parameters:
-    -i -> input file with adjacency matrix to read graph from
-    -n -> number of vertices in order to create graph with random generated edges
-    -t -> number of tasks for the BFS algorithm
+      -i -> input file with adjacency matrix to read graph from
+      -n -> number of vertices in order to create graph with random generated edges
+      -t -> number of tasks for the BFS algorithm
 
     The parameters -i and -n are mutually exclusive. Only one of the two should be present.
 
