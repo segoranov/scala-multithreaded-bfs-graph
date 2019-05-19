@@ -95,7 +95,7 @@ class GraphTest extends FlatSpec with Matchers {
 
   "reading graph from file" should "be correct" in {
 
-    var fileContent =
+    val fileContent =
       """11
 0 1 1 1 1 1 0 0 0 0 0
 1 0 0 0 0 0 1 0 0 0 0
