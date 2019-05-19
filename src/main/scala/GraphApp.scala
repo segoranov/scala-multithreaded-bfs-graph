@@ -182,7 +182,6 @@ object GraphApp extends LazyLogging {
     }
 
     // TODO:
-    //  Implement -q (quiet), currently it is just ignored.
-    //  Documentation - detailed and desriptive!
+    //  Finish documentation - detailed and descriptive!
   }
 }
