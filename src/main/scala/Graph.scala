@@ -13,7 +13,16 @@ import scala.concurrent.{Await, ExecutionContext, Future}
 import scala.util.Random
 import com.typesafe.scalalogging._
 
-case class ResultFromTask(generatedBFSPath: Path, timeForCompletionInMilliseconds: TimeElapsedInMilliseconds, threadID: Long)
+case class ResultFromTask(generatedBFSPath: Path, timeForCompletionInMilliseconds: TimeElapsedInMilliseconds, threadID: Long) {
+  override def toString: String = ???
+}
+
+//case class BFSTraversalFromAllVerticesResult(allTasks: List[ResultFromTask], timeForCompletionInMilliseconds: TimeElapsedInMilliseconds) {
+//
+//
+//
+//}
+
 
 case class Graph(adjMatrix: AdjMatrix) extends LazyLogging {
 
@@ -60,8 +69,10 @@ case class Graph(adjMatrix: AdjMatrix) extends LazyLogging {
       throw new IllegalArgumentException("Number of tasks for bfs traversal cannot be less than 1!")
     }
 
+    val sortedListOfVertices = getVertices.toList.sorted
+
     val result = time {
-      getVertices.map(start_BFS_task_from_vertex(_)).map(Await.result(_, Duration.Inf))
+      sortedListOfVertices.map(start_BFS_task_from_vertex(_)).map(Await.result(_, Duration.Inf))
     }
 
     logger.debug("Total number of threads used in current run: " + result._1.map(_.threadID).size)
@@ -116,7 +127,7 @@ case object Graph {
   type Vertex = Int
   type Path = List[Vertex]
 
-  type BFSTraversalFromAllVerticesResult = (Set[ResultFromTask], TimeElapsedInMilliseconds)
+  type BFSTraversalFromAllVerticesResult = (List[ResultFromTask], TimeElapsedInMilliseconds)
 
   def apply(adjMatrix: AdjMatrix): Graph = {
     def checkAdjMatrixValidity = {
