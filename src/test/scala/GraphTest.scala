@@ -22,6 +22,22 @@ class GraphTest extends FlatSpec with Matchers {
     Row(0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0)
   ))
 
+  val testGraphFileContent =
+    """11
+0 1 1 1 1 1 0 0 0 0 0
+1 0 0 0 0 0 1 0 0 0 0
+1 0 0 0 0 0 0 0 0 0 0
+1 0 0 0 0 0 0 0 1 1 0
+1 0 0 0 0 1 0 0 0 0 0
+1 0 0 0 1 0 0 0 0 0 1
+0 1 0 0 0 0 0 1 0 0 0
+0 0 0 0 0 0 1 0 0 0 0
+0 0 0 1 0 0 0 0 0 0 0
+0 0 0 1 0 0 0 0 0 0 0
+0 0 0 0 0 1 0 0 0 0 0"""
+
+  val testGraphFileName = "testGraph.txt"
+
   val testGraphManyVertices = Graph.withRandomEdges(numberOfVertices = 300)
 
   "all vertices" should "be from 0 to 10" in {
@@ -95,9 +111,30 @@ class GraphTest extends FlatSpec with Matchers {
   }
 
   "reading graph from file" should "be correct" in {
+    new PrintWriter(testGraphFileName) {
+      write(testGraphFileContent)
+      close
+    }
 
-    val fileContent =
-      """11
+    Graph.fromFile(testGraphFileName) shouldBe testGraph
+
+    new File(testGraphFileName).delete
+  }
+
+  "writing graph to file" should "have correct format" in {
+    new PrintWriter(testGraphFileName) {
+      write(testGraph.toString)
+      close
+    }
+
+    Graph.fromFile(testGraphFileName) shouldBe testGraph
+
+    new File(testGraphFileName).delete
+  }
+
+  "reading graph from incorrectly formatted file" should "throw IllegalArgumentException exception" in {
+    val invalidGraphFileContent =
+      """14
 0 1 1 1 1 1 0 0 0 0 0
 1 0 0 0 0 0 1 0 0 0 0
 1 0 0 0 0 0 0 0 0 0 0
@@ -110,16 +147,20 @@ class GraphTest extends FlatSpec with Matchers {
 0 0 0 1 0 0 0 0 0 0 0
 0 0 0 0 0 1 0 0 0 0 0"""
 
-    val fileName = "testGraph.txt"
-
-    new PrintWriter(fileName) {
-      write(fileContent)
+    new PrintWriter(testGraphFileName) {
+      write(invalidGraphFileContent)
       close
     }
 
-    Graph.fromFile(fileName) shouldBe testGraph
+    assertThrows[IllegalArgumentException] {
+      Graph.fromFile(testGraphFileName) shouldBe testGraph
+    }
+  }
 
-    new File(fileName).delete
+  "creating graph with negative number of vertices" should "throw IllegalArgumentException exception" in {
+    assertThrows[IllegalArgumentException] {
+      Graph.withRandomEdges(-5)
+    }
   }
 
   "empty graph" should "have 0 vertices" in {
@@ -139,4 +180,6 @@ class GraphTest extends FlatSpec with Matchers {
     GraphApp.processCommandLineArguments(List("-n", "125", "-t", "25")) should not be None
     GraphApp.processCommandLineArguments(List("-n", "125", "-q", "-t", "25")) should not be None
   }
+
+
 }

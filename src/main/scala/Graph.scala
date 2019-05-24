@@ -11,6 +11,7 @@ import scala.concurrent.duration.Duration
 import scala.concurrent.{Await, ExecutionContext, Future}
 import scala.util.Random
 import com.typesafe.scalalogging._
+import graph.GraphApp.logger
 
 case class ResultFromTask(generatedBFSPath: Path, timeForCompletionInMilliseconds: TimeElapsedInMilliseconds, threadID: Long)
 
@@ -40,7 +41,7 @@ case class Graph(adjMatrix: AdjMatrix) extends LazyLogging {
     }
   }
 
-  override def toString = adjMatrix.map(_.mkString("(", ",", ")")).reduceLeft(_ + "\n" + _)
+  override def toString = getNumVertices + "\n" + adjMatrix.map(_.mkString(" ")).reduceLeft(_ + "\n" + _)
 
   def bfsTraversalStartingFromAllVertices(numberOfTasks: Int): BFSTraversalFromAllVerticesResult = {
     logger.debug("Starting BFS traversal from all vertices (" + getNumVertices + ") with number of tasks: " + numberOfTasks)
@@ -135,6 +136,18 @@ case object Graph {
   def fromFile(file: String) = {
     val fileSource = scala.io.Source.fromFile(file)
     val fileContent = fileSource.getLines.toList
+
+    try {
+      if (fileContent.size != fileContent.head.toInt + 1) {
+        throw new IllegalArgumentException("Graph file '" + file + "' has invalid format!")
+      }
+    }
+    catch {
+
+      case _: Throwable => {
+        throw new IllegalArgumentException("Graph file '" + file + "' has invalid format!")
+      }
+    }
 
     fileSource.close
 
