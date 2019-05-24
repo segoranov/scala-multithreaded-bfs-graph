@@ -68,6 +68,10 @@ class GraphTest extends FlatSpec with Matchers {
     testGraph.hasEdge(-5, 205) shouldBe Left("Vertex " + -5 + " is not in the graph.")
   }
 
+  "testGraph" should "have 11 vertices" in {
+    testGraph.getNumVertices shouldBe 11
+  }
+
   "graph" should "be incorrect and throw exception" in {
     assertThrows[IllegalArgumentException] {
       Graph(AdjMatrix(Row(0, 0, 4), Row(0, 0, 0), Row(0, 0, 0)))
@@ -122,10 +126,7 @@ class GraphTest extends FlatSpec with Matchers {
   }
 
   "writing graph to file" should "have correct format" in {
-    new PrintWriter(testGraphFileName) {
-      write(testGraph.toString)
-      close
-    }
+    testGraph.writeToFile(testGraphFileName)
 
     Graph.fromFile(testGraphFileName) shouldBe testGraph
 
@@ -180,6 +181,4 @@ class GraphTest extends FlatSpec with Matchers {
     GraphApp.processCommandLineArguments(List("-n", "125", "-t", "25")) should not be None
     GraphApp.processCommandLineArguments(List("-n", "125", "-q", "-t", "25")) should not be None
   }
-
-
 }

@@ -187,6 +187,8 @@ object GraphApp extends LazyLogging {
         if (commandLineArgumentsData.runQuietly) {
           writeQuietlyAlgorithmResultsToFile()
         }
+
+        graph.writeToFile("test-graph-adjacency-matrix.txt")
       }
     }
 

@@ -1,5 +1,6 @@
 package graph
 
+import java.io.PrintWriter
 import java.util.concurrent.Executors
 
 import graph.Graph._
@@ -11,7 +12,6 @@ import scala.concurrent.duration.Duration
 import scala.concurrent.{Await, ExecutionContext, Future}
 import scala.util.Random
 import com.typesafe.scalalogging._
-import graph.GraphApp.logger
 
 case class ResultFromTask(generatedBFSPath: Path, timeForCompletionInMilliseconds: TimeElapsedInMilliseconds, threadID: Long)
 
@@ -41,7 +41,14 @@ case class Graph(adjMatrix: AdjMatrix) extends LazyLogging {
     }
   }
 
-  override def toString = getNumVertices + "\n" + adjMatrix.map(_.mkString(" ")).reduceLeft(_ + "\n" + _)
+  def writeToFile(file: String): Unit = new PrintWriter(file) {
+    write(formattedForFile)
+    close
+  }
+
+  private def formattedForFile: String = getNumVertices + "\n" + adjMatrix.map(_.mkString(" ")).reduceLeft(_ + "\n" + _)
+
+  override def toString = getNumVertices + "\n" + adjMatrix.map(_.mkString("(", ", ", ")")).reduceLeft(_ + "\n" + _)
 
   def bfsTraversalStartingFromAllVertices(numberOfTasks: Int): BFSTraversalFromAllVerticesResult = {
     logger.debug("Starting BFS traversal from all vertices (" + getNumVertices + ") with number of tasks: " + numberOfTasks)
