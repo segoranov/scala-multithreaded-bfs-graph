@@ -1,9 +1,10 @@
 package graph
 
-import graph.Graph.{AdjMatrix, Row}
-import graph.Timer.{TimeElapsedInMilliseconds, time}
-import org.scalatest.{FlatSpec, Matchers}
 import java.io.{File, PrintWriter}
+
+import graph.Graph.{AdjMatrix, Row}
+import graph.Timer.TimeElapsedInMilliseconds
+import org.scalatest.{FlatSpec, Matchers}
 
 class GraphTest extends FlatSpec with Matchers {
 
