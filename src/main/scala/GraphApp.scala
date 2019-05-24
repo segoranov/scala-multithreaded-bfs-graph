@@ -29,7 +29,16 @@ object GraphApp extends LazyLogging {
 
     Optional parameters:
       -o - output file for results. If not present, no results will be written to an output file.
-      -q (quiet) - If present, only the total time taken for the BFS will be written to an output file with name 'quiet_result.txt'.
+      -q (quiet) - if present, only the total time taken for the BFS will be written to an output file with name 'graph-bfs-quiet-result.txt'.
+
+    The program will always log information in file named 'graph-bfs.log' such as:
+
+    10:25:37.124 [pool-1-thread-5] DEBUG graph.Graph - Start BFS from vertex 10
+    10:25:37.339 [pool-1-thread-5] DEBUG graph.Graph - Finish BFS started from vertex 10. Time elapsed in milliseconds: 210
+
+    and also log errors such as:
+
+    10:40:17.914 [main] ERROR graph.GraphApp$ - Not all mandatory parameters are present!
   """
 
   def processCommandLineArguments(args: List[String]): Option[CommandLineArgumentsData] = {
@@ -47,7 +56,7 @@ object GraphApp extends LazyLogging {
     else {
       parseCommandLineArguments(Map.empty, args) match {
         case Some(argumentsToValuesMap) => {
-          if (argumentsToValuesMapIsValid(argumentsToValuesMap)) {
+          if (areValuesInMapValid(argumentsToValuesMap)) {
             Some(CommandLineArgumentsData(
               numberOfTasks = argumentsToValuesMap("-t").toInt,
               numberOfVertices = if (argumentsToValuesMap.contains("-n")) Some(argumentsToValuesMap("-n").toInt) else None,
@@ -87,7 +96,7 @@ object GraphApp extends LazyLogging {
     }
   }
 
-  def argumentsToValuesMapIsValid(map: ArgumentsToValuesMap) = {
+  def areValuesInMapValid(map: ArgumentsToValuesMap) = {
 
     def isValidInteger(str: String): Boolean = {
       try {
@@ -155,7 +164,7 @@ object GraphApp extends LazyLogging {
     pw.close
   }
 
-  def writeQuietlyAlgorithmResultsToFile(outputFile: String)
+  def writeQuietlyAlgorithmResultsToFile(outputFile: String = "graph-bfs-quiet-result.txt")
                                         (implicit results: BFSTraversalFromAllVerticesResult) = {
     val pw = new PrintWriter(outputFile)
     pw.write("Total time elapsed in milliseconds: ")
@@ -176,7 +185,7 @@ object GraphApp extends LazyLogging {
         }
 
         if (commandLineArgumentsData.runQuietly) {
-          writeQuietlyAlgorithmResultsToFile("quiet_result.txt")
+          writeQuietlyAlgorithmResultsToFile()
         }
       }
     }
