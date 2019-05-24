@@ -1,4 +1,6 @@
-## After creating an executable jar (for example with sbt-assembly), run the program as explained below.
+## University Project, run BFS algorithm on graph, starting from all vertices, with specified number of tasks (threads) using Scala
+
+### After creating an executable jar (for example with sbt-assembly), run the program as explained below.
 
     Usage: java -jar <file.jar> -i <graph-file.in> -t <number of tasks> [-o <graph-data.out>] [-q]
            java -jar <file.jar> -n <number_of_vertices> -t <number of tasks> [-o <graph-data.out>] [-q]
