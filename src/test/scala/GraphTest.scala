@@ -187,4 +187,9 @@ class GraphTest extends FlatSpec with Matchers {
     GraphApp.processCommandLineArguments(List("-n", "125", "-q", "-t", "1-20")) should not be None
     GraphApp.processCommandLineArguments(List("-n", "125", "-q", "-t", "1,2,3,4,5")) should not be None
   }
+
+  "BFS traversal results" should "be the same regardless of the number of threads" in {
+    testGraph.bfsTraversalStartingFromAllVertices(7).allResults.map(_.generatedBFSTraversal) shouldBe
+    testGraph.bfsTraversalStartingFromAllVertices(1).allResults.map(_.generatedBFSTraversal)
+  }
 }
