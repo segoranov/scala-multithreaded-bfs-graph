@@ -8,6 +8,18 @@ import org.scalatest.{FlatSpec, Matchers}
 
 class GraphTest extends FlatSpec with Matchers {
 
+  def isMatrixSymmetrical(adjMatrix: AdjMatrix): Boolean = {
+    val s = adjMatrix.size
+
+    for(i <- 0 until s; j <- 0 until s) {
+      if (adjMatrix(i)(j) != adjMatrix(j)(i)) {
+        return false
+      }
+    }
+
+    true
+  }
+
   val testGraph = Graph(AdjMatrix(
     Row(0, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0),
     Row(1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0),
@@ -40,18 +52,28 @@ class GraphTest extends FlatSpec with Matchers {
 
   val testGraphManyVertices = Graph.withRandomEdges(numberOfVertices = 300)
 
+  "testGraph adjacency matrix" should "be symmetrical" in {
+    isMatrixSymmetrical(testGraph.adjMatrix) shouldBe true
+  }
+
+  "withRandomEdges" should "always create symmetrical matrix" in {
+    for(i <- 1 to 100) {
+      isMatrixSymmetrical(Graph.withRandomEdges(i + 50).  adjMatrix) shouldBe true
+    }
+  }
+
   "all vertices" should "be from 0 to 10" in {
-    testGraph.getVertices shouldBe List.range(0, 11).toSet
+    testGraph.getVertices shouldBe (0 to 10).toSet
     testGraph.getNumVertices shouldBe 11
   }
 
   "vertices" should "be in graph" in {
-    (0 to 10).toList.foreach(vertex => testGraph.hasVertex(vertex) shouldBe true)
+    (0 to 10).foreach(vertex => testGraph.hasVertex(vertex) shouldBe true)
   }
 
   "vertices" should "not be in graph" in {
-    (-10 to -1).toList.foreach(vertex => testGraph.hasVertex(vertex) shouldBe false)
-    (11 to 30).toList.foreach(vertex => testGraph.hasVertex(vertex) shouldBe false)
+    (-10 to -1).foreach(vertex => testGraph.hasVertex(vertex) shouldBe false)
+    (11 to 30).foreach(vertex => testGraph.hasVertex(vertex) shouldBe false)
   }
 
   "edges" should "either exists or not exist" in {

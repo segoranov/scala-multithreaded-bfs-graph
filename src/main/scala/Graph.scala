@@ -181,7 +181,17 @@ case object Graph {
       throw new IllegalArgumentException("Graph cannot have negative number of vertices!")
     }
 
-    new Graph(List.fill(numberOfVertices)(List.fill(numberOfVertices)(Random.nextInt(2))))
+    // the matrix has to be symmetrical
+    var adjMatrix = List.fill(numberOfVertices)(List.fill(numberOfVertices)(0))
+
+    for (i <- 0 until numberOfVertices; j <- 0 to i) {
+      val randomEdge = Random.nextInt(2)
+
+      adjMatrix = adjMatrix.updated(i, adjMatrix(i).updated(j, randomEdge))
+      adjMatrix = adjMatrix.updated(j, adjMatrix(j).updated(i, randomEdge))
+    }
+
+    new Graph(adjMatrix)
   }
 
   def empty = new Graph(List.empty)
