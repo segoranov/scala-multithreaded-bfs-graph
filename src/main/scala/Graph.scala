@@ -54,7 +54,7 @@ case class Graph(adjMatrix: AdjMatrix) extends LazyLogging {
 
   private def formattedForFile: String = getNumVertices + "\n" + adjMatrix.map(_.mkString(" ")).reduceLeft(_ + "\n" + _)
 
-  override def toString = getNumVertices + "\n" + adjMatrix.map(_.mkString("(", ", ", ")")).reduceLeft(_ + "\n" + _)
+  override def toString = formattedForFile
 
   def bfsTraversalStartingFromAllVertices(numberOfTasks: Int): BFSTraversalFromAllVerticesResult = {
     logger.debug("Starting BFS traversal from all vertices (" + getNumVertices + ") with number of tasks: " + numberOfTasks)
