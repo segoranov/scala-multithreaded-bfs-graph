@@ -72,8 +72,8 @@ case class Graph(adjMatrix: AdjMatrix) extends LazyLogging {
       sortedListOfVertices.map(start_BFS_task_from_vertex(_)).map(Await.result(_, Duration.Inf))
     }
 
-    logger.debug("Total number of threads used in current run: " + result._1.map(_.threadID).size)
-    logger.debug("Total time elapsed (milliseconds) in current run: " + result._2)
+    logger.debug("Total number of threads used in current run: " + result._1.map(_.threadID).distinct.size)
+    logger.debug("Total time elapsed (milliseconds) in current run: " + result._2 + "\n----------------\n")
 
     threadPool.shutdown
 
