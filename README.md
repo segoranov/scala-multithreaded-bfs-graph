@@ -10,7 +10,7 @@
       -n -> number of vertices in order to create graph with random generated edges
       -t -> number of tasks for the BFS algorithm
 
-      There are 3 formats for specifying number of tasks:
+    There are 3 formats for specifying number of tasks:
       1) Just a number. Example:
         -t 15
        This will run the algorithm with 15 threads.
@@ -22,6 +22,15 @@
       3) Number of threads separated by comma. Example:
         -t 1,3,5,7,9
        This will run the algorithm with 1 thread, then with 3 threads, and so on...
+
+
+    Sample input file format for graph with 3 vertices:
+
+      graph-input.txt:
+      3
+      0 1 0
+      1 0 1
+      0 0 1
 
     The parameters -i and -n are mutually exclusive. Only one of the two should be present.
 
