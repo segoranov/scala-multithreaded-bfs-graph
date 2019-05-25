@@ -4,11 +4,10 @@ import java.io.PrintWriter
 import java.nio.file.{Files, Paths}
 
 import com.typesafe.scalalogging.LazyLogging
-import graph.Graph.BFSTraversalFromAllVerticesResult
 
 import scala.annotation.tailrec
 
-case class CommandLineArgumentsData(numberOfTasks: Int,
+case class CommandLineArgumentsData(numberOfTasks: List[Int],
                                     outputFile: Option[String],
                                     inputFile: Option[String],
                                     numberOfVertices: Option[Int],
@@ -58,7 +57,7 @@ object GraphApp extends LazyLogging {
         case Some(argumentsToValuesMap) => {
           if (areValuesInMapValid(argumentsToValuesMap)) {
             Some(CommandLineArgumentsData(
-              numberOfTasks = argumentsToValuesMap("-t").toInt,
+              numberOfTasks = parseNumberOfTasks(argumentsToValuesMap("-t")),
               numberOfVertices = if (argumentsToValuesMap.contains("-n")) Some(argumentsToValuesMap("-n").toInt) else None,
               inputFile = argumentsToValuesMap.get("-i"),
               outputFile = argumentsToValuesMap.get("-o"),
@@ -96,23 +95,45 @@ object GraphApp extends LazyLogging {
     }
   }
 
-  def areValuesInMapValid(map: ArgumentsToValuesMap) = {
+  def parseNumberOfTasks(numberOfTasks: String): List[Int] = {
+    /* Valid formats about number of tasks:
+            15 -> run BFS with 15 threads
+            1-20 -> run BFS with number of threads 1, 2, 3, 4, ... , 20
+            1,5,20,14 -> run BFS with 1, 5, 20, 14 number of threads
+    */
 
-    def isValidInteger(str: String): Boolean = {
-      try {
-        str.toInt
-        true
-      }
-      catch {
-        case _: Throwable => {
-          logger.error(str + " is not a valid integer!")
-          false
-        }
+    if (isValidInteger(numberOfTasks)) {
+      List(numberOfTasks.toInt)
+    }
+    else if (numberOfTasks.contains("-")) {
+      // format: x-y
+      val rangeOfTasks = numberOfTasks.split("-")
+
+      val rangeStart = rangeOfTasks(0).toInt
+      val rangeEnd = rangeOfTasks(1).toInt
+
+      (rangeStart to rangeEnd).toList
+    } else if (numberOfTasks.contains(",")) {
+      // format: x,y,z,...
+      numberOfTasks.split(",").map(_.toInt).toList
+    } else {
+      List.empty
+    }
+  }
+
+  def isValidInteger(str: String): Boolean = {
+    try {
+      str.toInt
+      true
+    }
+    catch {
+      case _: Throwable => {
+        false
       }
     }
+  }
 
-    val numberOfTasksIsValid = isValidInteger(map("-t"))
-
+  def areValuesInMapValid(map: ArgumentsToValuesMap): Boolean = {
     val numberOfVerticesIsValid = {
       if (map.contains("-n")) {
         isValidInteger(map("-n"))
@@ -139,7 +160,58 @@ object GraphApp extends LazyLogging {
       }
     }
 
-    numberOfTasksIsValid && numberOfVerticesIsValid && inputFileIsValid
+    areNumberOfTasksInValidFormat(map("-t")) && numberOfVerticesIsValid && inputFileIsValid
+  }
+
+  def areNumberOfTasksInValidFormat(numberOfTasks: String) = {
+
+    /* Valid formats about number of tasks:
+            15 -> run BFS with 15 threads
+            1-20 -> run BFS with number of threads 1, 2, 3, 4, ... , 20
+            1,5,20,14 -> run BFS with 1, 5, 20, 14 number of threads
+    */
+
+    if (isValidInteger(numberOfTasks)) {
+      true
+    }
+    else if (numberOfTasks.contains("-")) {
+      // format: x-y
+      val rangeOfTasks = numberOfTasks.split("-")
+
+      if (rangeOfTasks.size != 2) {
+        // must be 2 if format is x-y
+        logger.error("Invalid range in number of tasks specified! Format must be 'x-y' - one dash and two numbers around it, specifying a valid range.")
+        false
+      } else {
+        if (!isValidInteger(rangeOfTasks(0)) || !isValidInteger(rangeOfTasks(1))) {
+          logger.error("Invalid range in number of tasks specified!")
+          false
+        } else {
+          val rangeStart = rangeOfTasks(0).toInt
+          val rangeEnd = rangeOfTasks(1).toInt
+
+          if (rangeStart > rangeEnd) {
+            logger.error("Invalid range in number of tasks specified! " + rangeStart + " is greater than " + rangeEnd + "!")
+            false
+          } else {
+            true
+          }
+        }
+      }
+    } else if (numberOfTasks.contains(",")) {
+      // format: x,y,z,...
+      val arrNumberOfTasks = numberOfTasks.split(",")
+
+      if (arrNumberOfTasks.exists(!isValidInteger(_))) {
+        logger.error("Invalid number of tasks specified!")
+        false
+      } else {
+        true
+      }
+    } else {
+      logger.error("Invalid range in number of tasks specified!")
+      false
+    }
   }
 
   def createGraphFromCommandLineArguments(commandLineArgumentsData: CommandLineArgumentsData) = {
@@ -152,23 +224,34 @@ object GraphApp extends LazyLogging {
   }
 
   def writeAlgorithmResultsToFile(outputFile: String)
-                                 (implicit graph: Graph, results: BFSTraversalFromAllVerticesResult) = {
+                                 (implicit graph: Graph,
+                                  results: List[BFSTraversalFromAllVerticesResult]) = {
     val pw = new PrintWriter(outputFile)
+
+    results.foreach(r => pw.write(
+      "Time for completion in milliseconds with " + r.numberOfThreads + " threads: "
+        + r.timeForCompletionInMilliseconds.toString))
+
+    pw.write("--------------------- DETAILS ---------------------")
 
     pw.write("Graph adjacency matrix:\n")
     pw.write(graph.toString)
 
-    pw.write("\n\nTotal time taken to generate below BFS traversals: " + results._2 + " milliseconds\n")
+
     pw.write("All generated BFS traversals:\n")
-    results._1.foreach(resultFromTask => pw.write(resultFromTask.generatedBFSPath.mkString("Traversal:\n", " ", "\n\n")))
+    results.head.allResults.foreach(r => pw.write(r.generatedBFSTraversal.mkString("Traversal:\n", " ", "\n\n")))
+
     pw.close
   }
 
   def writeQuietlyAlgorithmResultsToFile(outputFile: String = "graph-bfs-quiet-result.txt")
-                                        (implicit results: BFSTraversalFromAllVerticesResult) = {
+                                        (implicit results: List[BFSTraversalFromAllVerticesResult]) = {
     val pw = new PrintWriter(outputFile)
-    pw.write("Total time elapsed in milliseconds: ")
-    pw.write(results._2.toString)
+
+    results.foreach(r => pw.write(
+      "Time for completion in milliseconds with " + r.numberOfThreads + " threads: "
+      + r.timeForCompletionInMilliseconds.toString))
+
     pw.close
   }
 
@@ -178,7 +261,8 @@ object GraphApp extends LazyLogging {
       case Some(commandLineArgumentsData) => {
         implicit val graph = createGraphFromCommandLineArguments(commandLineArgumentsData)
 
-        implicit val resultFromAlgorithm = graph.bfsTraversalStartingFromAllVertices(commandLineArgumentsData.numberOfTasks)
+        //implicit val resultsFromAlgorithm = graph.bfsTraversalStartingFromAllVertices(commandLineArgumentsData.numberOfTasks)
+        implicit val resultsFromAlgorithm = commandLineArgumentsData.numberOfTasks.map(graph.bfsTraversalStartingFromAllVertices)
 
         if (commandLineArgumentsData.outputFile.isDefined) {
           writeAlgorithmResultsToFile(commandLineArgumentsData.outputFile.get)

@@ -46,12 +46,12 @@ class GraphTest extends FlatSpec with Matchers {
   }
 
   "vertices" should "be in graph" in {
-    List.range(0, 11).foreach(vertex => testGraph.hasVertex(vertex) shouldBe true)
+    (0 to 10).toList.foreach(vertex => testGraph.hasVertex(vertex) shouldBe true)
   }
 
   "vertices" should "not be in graph" in {
-    List.range(-10, 0).foreach(vertex => testGraph.hasVertex(vertex) shouldBe false)
-    List.range(11, 30).foreach(vertex => testGraph.hasVertex(vertex) shouldBe false)
+    (-10 to -1).toList.foreach(vertex => testGraph.hasVertex(vertex) shouldBe false)
+    (11 to 30).toList.foreach(vertex => testGraph.hasVertex(vertex) shouldBe false)
   }
 
   "edges" should "either exists or not exist" in {
@@ -99,10 +99,12 @@ class GraphTest extends FlatSpec with Matchers {
 
     // create no more tasks than the number of available processors - 1, it is of no use
     val mapNumberOfThreadsToTimeElapsed =
-      List.range(1, Runtime.getRuntime.availableProcessors)
+      (1 until Runtime.getRuntime.availableProcessors).toList
         .foldLeft[Map[NumberOfTasks, TimeElapsedInMilliseconds]](Map.empty)((acc, numberOfTasks) => {
 
-        val millisecondsElapsed = testGraphManyVertices.bfsTraversalStartingFromAllVertices(numberOfTasks)._2
+        val millisecondsElapsed =
+          testGraphManyVertices.bfsTraversalStartingFromAllVertices(numberOfTasks).timeForCompletionInMilliseconds
+
         acc + (numberOfTasks -> millisecondsElapsed)
       })
 
@@ -174,11 +176,15 @@ class GraphTest extends FlatSpec with Matchers {
     GraphApp.processCommandLineArguments(List("-i", "graph-in.txt", "-n", "1024")) shouldBe None
     GraphApp.processCommandLineArguments(List("-i", "__NON_FUCKING_EXISTENT_FILE___", "-t", "25")) shouldBe None
     GraphApp.processCommandLineArguments(List("-n", "125", "-q", "-t", "25asd")) shouldBe None
+    GraphApp.processCommandLineArguments(List("-n", "125", "-q", "-t", "1- 20")) shouldBe None
+    GraphApp.processCommandLineArguments(List("-n", "125", "-q", "-t", "1,2, 3,4,5")) shouldBe None
   }
 
   it should "be valid" in {
     GraphApp.processCommandLineArguments(List("-n", "125", "-o", "output.txt", "-t", "25")) should not be None
     GraphApp.processCommandLineArguments(List("-n", "125", "-t", "25")) should not be None
     GraphApp.processCommandLineArguments(List("-n", "125", "-q", "-t", "25")) should not be None
+    GraphApp.processCommandLineArguments(List("-n", "125", "-q", "-t", "1-20")) should not be None
+    GraphApp.processCommandLineArguments(List("-n", "125", "-q", "-t", "1,2,3,4,5")) should not be None
   }
 }

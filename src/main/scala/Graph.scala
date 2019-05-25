@@ -3,6 +3,7 @@ package graph
 import java.io.PrintWriter
 import java.util.concurrent.Executors
 
+import com.typesafe.scalalogging._
 import graph.Graph._
 import graph.Timer._
 
@@ -11,18 +12,14 @@ import scala.collection.immutable.Queue
 import scala.concurrent.duration.Duration
 import scala.concurrent.{Await, ExecutionContext, Future}
 import scala.util.Random
-import com.typesafe.scalalogging._
 
-case class ResultFromTask(generatedBFSPath: Path, timeForCompletionInMilliseconds: TimeElapsedInMilliseconds, threadID: Long) {
-  override def toString: String = ???
-}
+case class BFSTraversalFromSingleVertexResult(generatedBFSTraversal: BFSTraversal,
+                                              timeForCompletionInMilliseconds: TimeElapsedInMilliseconds,
+                                              threadID: Long)
 
-//case class BFSTraversalFromAllVerticesResult(allTasks: List[ResultFromTask], timeForCompletionInMilliseconds: TimeElapsedInMilliseconds) {
-//
-//
-//
-//}
-
+case class BFSTraversalFromAllVerticesResult(allResults: List[BFSTraversalFromSingleVertexResult],
+                                             timeForCompletionInMilliseconds: TimeElapsedInMilliseconds,
+                                             numberOfThreads: Int)
 
 case class Graph(adjMatrix: AdjMatrix) extends LazyLogging {
 
@@ -80,12 +77,15 @@ case class Graph(adjMatrix: AdjMatrix) extends LazyLogging {
 
     threadPool.shutdown
 
-    result
+    BFSTraversalFromAllVerticesResult(
+      allResults = result._1,
+      timeForCompletionInMilliseconds = result._2,
+      numberOfThreads = numberOfTasks)
   }
 
-  private[graph] def bfsTraversalFrom(start: Vertex): Path = {
+  private[graph] def bfsTraversalFrom(start: Vertex): BFSTraversal = {
     @tailrec
-    def bfs(toVisit: Queue[Vertex], reached: Set[Vertex], path: Path): Path = {
+    def bfs(toVisit: Queue[Vertex], reached: Set[Vertex], path: BFSTraversal): BFSTraversal = {
       if (toVisit.isEmpty) path
       else {
         val current = toVisit.head
@@ -102,7 +102,7 @@ case class Graph(adjMatrix: AdjMatrix) extends LazyLogging {
     bfs(Queue(start), Set(start), List.empty).reverse
   }
 
-  private def start_BFS_task_from_vertex(startingVertex: Vertex)(implicit ec: ExecutionContext): Future[ResultFromTask] = Future {
+  private def start_BFS_task_from_vertex(startingVertex: Vertex)(implicit ec: ExecutionContext): Future[BFSTraversalFromSingleVertexResult] = Future {
     logger.debug("Start BFS from vertex " + startingVertex)
     val result = time {
       bfsTraversalFrom(startingVertex)
@@ -111,7 +111,7 @@ case class Graph(adjMatrix: AdjMatrix) extends LazyLogging {
     logger.debug("Finish BFS started from vertex " + startingVertex
       + ". Time elapsed in milliseconds: " + result._2)
 
-    ResultFromTask(result._1, result._2, Thread.currentThread.getName.split("-").last.toLong)
+    BFSTraversalFromSingleVertexResult(result._1, result._2, Thread.currentThread.getName.split("-").last.toLong)
   }
 }
 
@@ -125,9 +125,7 @@ case object Graph {
   def AdjMatrix(xs: Row*) = List(xs: _*)
 
   type Vertex = Int
-  type Path = List[Vertex]
-
-  type BFSTraversalFromAllVerticesResult = (List[ResultFromTask], TimeElapsedInMilliseconds)
+  type BFSTraversal = List[Vertex]
 
   def apply(adjMatrix: AdjMatrix): Graph = {
     def checkAdjMatrixValidity = {
