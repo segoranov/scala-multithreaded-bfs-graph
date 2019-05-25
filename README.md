@@ -2,8 +2,8 @@
 
 ### After creating an executable jar (for example with sbt-assembly), run the program as explained below.
 
-    Usage: java -jar <file.jar> -i <graph-file.in> -t <number of tasks> [-o <graph-data.out>] [-q]
-           java -jar <file.jar> -n <number_of_vertices> -t <number of tasks> [-o <graph-data.out>] [-q]
+    Usage: java -jar <file.jar> -i <graph-file.in> -t <number of tasks> [-o <output_file_name>] [-q]
+           java -jar <file.jar> -n <number_of_vertices> -t <number of tasks> [-o <output_file_name>] [-q]
 
     Mandatory parameters:
       -i -> input file with adjacency matrix to read graph from
