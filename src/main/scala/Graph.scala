@@ -102,7 +102,8 @@ case class Graph(adjMatrix: AdjMatrix) extends LazyLogging {
     bfs(Queue(start), Set(start), List.empty).reverse
   }
 
-  private def start_BFS_task_from_vertex(startingVertex: Vertex)(implicit ec: ExecutionContext): Future[BFSTraversalFromSingleVertexResult] = Future {
+  private def start_BFS_task_from_vertex(startingVertex: Vertex)(implicit ec: ExecutionContext)
+	: Future[BFSTraversalFromSingleVertexResult] = Future {
     logger.debug("Start BFS from vertex " + startingVertex)
     val result = time {
       bfsTraversalFrom(startingVertex)
