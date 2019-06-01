@@ -11,7 +11,7 @@ class GraphTest extends FlatSpec with Matchers {
   def isMatrixSymmetrical(adjMatrix: AdjMatrix): Boolean = {
     val s = adjMatrix.size
 
-    for(i <- 0 until s; j <- 0 until s) {
+    for (i <- 0 until s; j <- 0 until s) {
       if (adjMatrix(i)(j) != adjMatrix(j)(i)) {
         return false
       }
@@ -50,15 +50,15 @@ class GraphTest extends FlatSpec with Matchers {
 
   val testGraphFileName = "testGraph.txt"
 
-  val testGraphManyVertices = Graph.withRandomEdges(numberOfVertices = 300)
+  val testGraphManyVertices = Graph.withRandomEdges(numberOfVertices = 500)
 
   "testGraph adjacency matrix" should "be symmetrical" in {
     isMatrixSymmetrical(testGraph.adjMatrix) shouldBe true
   }
 
   "withRandomEdges" should "always create symmetrical matrix" in {
-    for(i <- 1 to 100) {
-      isMatrixSymmetrical(Graph.withRandomEdges(i + 50).  adjMatrix) shouldBe true
+    for (i <- 1 to 100) {
+      isMatrixSymmetrical(Graph.withRandomEdges(i + 50).adjMatrix) shouldBe true
     }
   }
 
@@ -144,7 +144,7 @@ class GraphTest extends FlatSpec with Matchers {
       close
     }
 
-    Graph.fromFile(testGraphFileName) shouldBe testGraph
+    Graph.fromFile(testGraphFileName).adjMatrix shouldBe testGraph.adjMatrix
 
     new File(testGraphFileName).delete
   }
@@ -152,9 +152,37 @@ class GraphTest extends FlatSpec with Matchers {
   "writing graph to file" should "have correct format" in {
     testGraph.writeToFile(testGraphFileName)
 
-    Graph.fromFile(testGraphFileName) shouldBe testGraph
+    Graph.fromFile(testGraphFileName).adjMatrix shouldBe testGraph.adjMatrix
 
     new File(testGraphFileName).delete
+  }
+
+  "graphs" should "not be equal" in {
+    testGraph.writeToFile(testGraphFileName)
+
+    val anotherGraphFileContent =
+      """11
+0 1 1 1 1 1 0 0 0 0 0
+1 0 0 0 0 0 1 0 1 0 0
+1 0 0 0 0 0 0 0 0 0 0
+1 0 0 0 0 0 0 0 1 1 0
+1 0 0 0 0 1 0 0 0 0 0
+1 0 0 0 1 0 0 0 0 0 1
+0 1 0 0 0 0 0 1 0 0 0
+0 0 0 0 0 0 1 0 0 0 0
+0 0 0 1 0 0 0 0 0 0 0
+0 0 0 1 0 0 0 0 0 0 0
+0 0 0 0 0 1 0 0 0 0 0"""
+
+    new PrintWriter("another") {
+      write(anotherGraphFileContent)
+      close
+    }
+
+    Graph.fromFile(testGraphFileName).adjMatrix should not be Graph.fromFile("another").adjMatrix
+
+    new File(testGraphFileName).delete
+    new File("another").delete
   }
 
   "reading graph from incorrectly formatted file" should "throw IllegalArgumentException exception" in {
@@ -178,7 +206,7 @@ class GraphTest extends FlatSpec with Matchers {
     }
 
     assertThrows[IllegalArgumentException] {
-      Graph.fromFile(testGraphFileName) shouldBe testGraph
+      Graph.fromFile(testGraphFileName).adjMatrix shouldBe testGraph.adjMatrix
     }
   }
 
@@ -212,6 +240,6 @@ class GraphTest extends FlatSpec with Matchers {
 
   "BFS traversal results" should "be the same regardless of the number of threads" in {
     testGraph.bfsTraversalStartingFromAllVertices(7).allResults.map(_.generatedBFSTraversal) shouldBe
-    testGraph.bfsTraversalStartingFromAllVertices(1).allResults.map(_.generatedBFSTraversal)
+      testGraph.bfsTraversalStartingFromAllVertices(1).allResults.map(_.generatedBFSTraversal)
   }
 }

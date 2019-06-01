@@ -3,7 +3,7 @@ package graph
 import java.io.PrintWriter
 import java.nio.file.{Files, Paths}
 
-import com.typesafe.scalalogging.{LazyLogging, StrictLogging}
+import com.typesafe.scalalogging.StrictLogging
 
 import scala.annotation.tailrec
 
@@ -283,9 +283,6 @@ object GraphApp extends StrictLogging {
       case Some(commandLineArgumentsData) => {
         implicit val graph = createGraphFromCommandLineArguments(commandLineArgumentsData)
 
-        graph.writeToFile("ST_TEST_GRAPH_ADJ_MATRIX.input")
-
-        //implicit val resultsFromAlgorithm = graph.bfsTraversalStartingFromAllVertices(commandLineArgumentsData.numberOfTasks)
         implicit val resultsFromAlgorithm = commandLineArgumentsData.numberOfTasks.map(graph.bfsTraversalStartingFromAllVertices)
 
         if (commandLineArgumentsData.outputFile.isDefined) {
@@ -297,8 +294,5 @@ object GraphApp extends StrictLogging {
         }
       }
     }
-
-    // TODO:
-    //  Finish documentation - detailed and descriptive!
   }
 }

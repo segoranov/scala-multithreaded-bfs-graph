@@ -103,7 +103,7 @@ case class Graph(adjMatrix: AdjMatrix) extends StrictLogging {
   }
 
   private def start_BFS_task_from_vertex(startingVertex: Vertex)(implicit ec: ExecutionContext)
-	: Future[BFSTraversalFromSingleVertexResult] = Future {
+  : Future[BFSTraversalFromSingleVertexResult] = Future {
     logger.debug("Start BFS from vertex " + startingVertex)
     val result = time {
       bfsTraversalFrom(startingVertex)
@@ -117,13 +117,13 @@ case class Graph(adjMatrix: AdjMatrix) extends StrictLogging {
 }
 
 case object Graph {
-  type Row = List[Int]
+  type Row = Array[Int]
 
-  def Row(xs: Int*) = List(xs: _*)
+  def Row(xs: Int*) = Array(xs: _*)
 
-  type AdjMatrix = List[Row]
+  type AdjMatrix = Array[Row]
 
-  def AdjMatrix(xs: Row*) = List(xs: _*)
+  def AdjMatrix(xs: Row*) = Array(xs: _*)
 
   type Vertex = Int
   type BFSTraversal = List[Vertex]
@@ -152,7 +152,7 @@ case object Graph {
   // 0 0 1
   def fromFile(file: String) = {
     val fileSource = scala.io.Source.fromFile(file)
-    val fileContent = fileSource.getLines.toList
+    val fileContent = fileSource.getLines.toArray
 
     try {
       if (fileContent.size != fileContent.head.toInt + 1) {
@@ -171,7 +171,6 @@ case object Graph {
     val adjMatrix =
       fileContent.tail // size of the matrix is not needed, ignore it
         .map(_.split(" "))
-        .map(_.toList)
         .map(row => row.map(_.toInt))
 
     new Graph(adjMatrix)
@@ -181,8 +180,6 @@ case object Graph {
     if (numberOfVertices < 0) {
       throw new IllegalArgumentException("Graph cannot have negative number of vertices!")
     }
-
-    println("Start creating random graph.")
 
     // the matrix has to be symmetrical
     val adjMatrix = Array.fill(numberOfVertices)(Array.fill(numberOfVertices)(0))
@@ -194,11 +191,9 @@ case object Graph {
       adjMatrix(j)(i) = randomEdge
     }
 
-    println("Finish creating random graph.")
-
-    new Graph(adjMatrix.toList.map(_.toList))
+    new Graph(adjMatrix)
   }
 
-  def empty = new Graph(List.empty)
+  def empty = new Graph(Array.empty)
 }
 
