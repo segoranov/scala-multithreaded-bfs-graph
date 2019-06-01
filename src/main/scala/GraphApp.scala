@@ -3,7 +3,7 @@ package graph
 import java.io.PrintWriter
 import java.nio.file.{Files, Paths}
 
-import com.typesafe.scalalogging.LazyLogging
+import com.typesafe.scalalogging.{LazyLogging, StrictLogging}
 
 import scala.annotation.tailrec
 
@@ -13,7 +13,7 @@ case class CommandLineArgumentsData(numberOfTasks: List[Int],
                                     numberOfVertices: Option[Int],
                                     runQuietly: Boolean)
 
-object GraphApp extends LazyLogging {
+object GraphApp extends StrictLogging {
   val usage =
     """
     Usage: java -jar <file.jar> -i <graph-file.in> -t <number of tasks> [-o <output_file_name>] [-q]
@@ -282,6 +282,8 @@ object GraphApp extends LazyLogging {
       case None => println(usage)
       case Some(commandLineArgumentsData) => {
         implicit val graph = createGraphFromCommandLineArguments(commandLineArgumentsData)
+
+        graph.writeToFile("ST_TEST_GRAPH_ADJ_MATRIX.input")
 
         //implicit val resultsFromAlgorithm = graph.bfsTraversalStartingFromAllVertices(commandLineArgumentsData.numberOfTasks)
         implicit val resultsFromAlgorithm = commandLineArgumentsData.numberOfTasks.map(graph.bfsTraversalStartingFromAllVertices)

@@ -21,7 +21,7 @@ case class BFSTraversalFromAllVerticesResult(allResults: List[BFSTraversalFromSi
                                              timeForCompletionInMilliseconds: TimeElapsedInMilliseconds,
                                              numberOfThreads: Int)
 
-case class Graph(adjMatrix: AdjMatrix) extends LazyLogging {
+case class Graph(adjMatrix: AdjMatrix) extends StrictLogging {
 
   def getVertices: Set[Vertex] = if (adjMatrix.isEmpty) Set.empty else List.range(0, adjMatrix.size).toSet
 
@@ -182,17 +182,21 @@ case object Graph {
       throw new IllegalArgumentException("Graph cannot have negative number of vertices!")
     }
 
+    println("Start creating random graph.")
+
     // the matrix has to be symmetrical
-    var adjMatrix = List.fill(numberOfVertices)(List.fill(numberOfVertices)(0))
+    val adjMatrix = Array.fill(numberOfVertices)(Array.fill(numberOfVertices)(0))
 
     for (i <- 0 until numberOfVertices; j <- 0 to i) {
       val randomEdge = Random.nextInt(2)
 
-      adjMatrix = adjMatrix.updated(i, adjMatrix(i).updated(j, randomEdge))
-      adjMatrix = adjMatrix.updated(j, adjMatrix(j).updated(i, randomEdge))
+      adjMatrix(i)(j) = randomEdge
+      adjMatrix(j)(i) = randomEdge
     }
 
-    new Graph(adjMatrix)
+    println("Finish creating random graph.")
+
+    new Graph(adjMatrix.toList.map(_.toList))
   }
 
   def empty = new Graph(List.empty)
