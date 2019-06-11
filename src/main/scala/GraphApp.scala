@@ -17,6 +17,9 @@ object GraphApp extends StrictLogging {
   val usage =
     """
     Usage: java -jar <file.jar> -i <graph-file.in> -t <number of tasks> [-o <output_file_name>] [-q]
+
+              OR
+
            java -jar <file.jar> -n <number_of_vertices> -t <number of tasks> [-o <output_file_name>] [-q]
 
     Mandatory parameters:
