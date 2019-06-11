@@ -253,11 +253,9 @@ object GraphApp extends StrictLogging {
                                   results: List[BFSTraversalFromAllVerticesResult]) = {
     val pw = new PrintWriter(outputFile)
 
-    results.foreach(r => pw.write(
-      "Time for completion in milliseconds with " + r.numberOfThreads + " threads: "
-        + r.timeForCompletionInMilliseconds.toString + "\n"))
+    pw.write(quietResultToString)
 
-    pw.write("\n--------------------- DETAILS ---------------------\n")
+    pw.write("\n\n--------------------- DETAILS ---------------------\n")
 
     pw.write("Graph adjacency matrix:\n")
     pw.write(graph.toString + "\n\n")
@@ -271,13 +269,14 @@ object GraphApp extends StrictLogging {
 
   def writeQuietlyAlgorithmResultsToFile(outputFile: String = "graph-bfs-quiet-result.txt")
                                         (implicit results: List[BFSTraversalFromAllVerticesResult]) = {
-    val pw = new PrintWriter(outputFile)
+    new PrintWriter(outputFile) {
+      write(quietResultToString)
+      close
+    }
+  }
 
-    results.foreach(r => pw.write(
-      "Time for completion in milliseconds with " + r.numberOfThreads + " threads: "
-        + r.timeForCompletionInMilliseconds.toString + "\n"))
-
-    pw.close
+  def quietResultToString(implicit results: List[BFSTraversalFromAllVerticesResult]) = {
+    results.map(r => r.numberOfThreads + " threads -> " + r.timeForCompletionInMilliseconds + " ms").reduceLeft(_ + "\n" + _)
   }
 
   def main(args: Array[String]): Unit = {
@@ -295,6 +294,9 @@ object GraphApp extends StrictLogging {
         if (commandLineArgumentsData.runQuietly) {
           writeQuietlyAlgorithmResultsToFile()
         }
+
+        // print quiet results to screen for convenience
+        println(quietResultToString)
       }
     }
   }
