@@ -119,23 +119,25 @@ class GraphTest extends FlatSpec with Matchers {
     "be faster when the threads (tasks) are more" in {
     type NumberOfTasks = Int
 
-    // create no more tasks than the number of available processors - 1, it is of no use
-    val mapNumberOfThreadsToTimeElapsed =
-      (1 until Runtime.getRuntime.availableProcessors).toList
-        .foldLeft[Map[NumberOfTasks, TimeElapsedInMilliseconds]](Map.empty)((acc, numberOfTasks) => {
+    // test only if we have 3 CPUs or more, otherwise threads could interfere with one another
+    if (Runtime.getRuntime.availableProcessors >= 3) {
+      val mapNumberOfThreadsToTimeElapsed =
+        (1 to Runtime.getRuntime.availableProcessors - 2).toList
+          .foldLeft[Map[NumberOfTasks, TimeElapsedInMilliseconds]](Map.empty)((acc, numberOfTasks) => {
 
-        val millisecondsElapsed =
-          testGraphManyVertices.bfsTraversalStartingFromAllVertices(numberOfTasks).timeForCompletionInMilliseconds
+          val millisecondsElapsed =
+            testGraphManyVertices.bfsTraversalStartingFromAllVertices(numberOfTasks).timeForCompletionInMilliseconds
 
-        acc + (numberOfTasks -> millisecondsElapsed)
+          acc + (numberOfTasks -> millisecondsElapsed)
+        })
+
+      // less threads should spent more time on the task
+      mapNumberOfThreadsToTimeElapsed.foreach(pair => {
+        mapNumberOfThreadsToTimeElapsed
+          .filter(other => other._1 < pair._1)
+          .foreach(other => other._2 should be > pair._2)
       })
-
-    // less threads should spent more time on the task
-    mapNumberOfThreadsToTimeElapsed.foreach(pair => {
-      mapNumberOfThreadsToTimeElapsed
-        .filter(other => other._1 < pair._1)
-        .foreach(other => other._2 should be > pair._2)
-    })
+    }
   }
 
   "reading graph from file" should "be correct" in {
