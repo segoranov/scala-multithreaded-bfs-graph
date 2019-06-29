@@ -14,11 +14,11 @@ import scala.concurrent.{Await, ExecutionContext, Future}
 import scala.util.Random
 
 case class BFSTraversalFromSingleVertexResult(generatedBFSTraversal: BFSTraversal,
-                                              timeForCompletionInMilliseconds: TimeElapsedInMilliseconds,
+                                              timeForCompletionInMilliseconds: Long,
                                               threadID: Long)
 
 case class BFSTraversalFromAllVerticesResult(allResults: List[BFSTraversalFromSingleVertexResult],
-                                             timeForCompletionInMilliseconds: TimeElapsedInMilliseconds,
+                                             timeForCompletionInMilliseconds: Long,
                                              numberOfThreads: Int)
 
 case class Graph(adjMatrix: AdjMatrix) extends StrictLogging {
@@ -68,18 +68,19 @@ case class Graph(adjMatrix: AdjMatrix) extends StrictLogging {
 
     val sortedListOfVertices = getVertices.toList.sorted
 
-    val result = time {
+    val calculation = time {
       sortedListOfVertices.map(start_BFS_task_from_vertex(_)).map(Await.result(_, Duration.Inf))
     }
 
-    logger.debug("Total number of threads used in current run: " + result._1.map(_.threadID).distinct.size)
-    logger.debug("Total time elapsed (milliseconds) in current run: " + result._2 + "\n----------------\n")
+    logger.debug("Total number of threads used in current run: " + calculation.result.map(_.threadID).distinct.size)
+    logger.debug("Total time elapsed (milliseconds) in current run: "
+      + calculation.timeElapsedInMilliseconds + "\n----------------\n")
 
     threadPool.shutdown
 
     BFSTraversalFromAllVerticesResult(
-      allResults = result._1,
-      timeForCompletionInMilliseconds = result._2,
+      allResults = calculation.result,
+      timeForCompletionInMilliseconds = calculation.timeElapsedInMilliseconds,
       numberOfThreads = numberOfTasks)
   }
 
@@ -105,14 +106,17 @@ case class Graph(adjMatrix: AdjMatrix) extends StrictLogging {
   private def start_BFS_task_from_vertex(startingVertex: Vertex)(implicit ec: ExecutionContext)
   : Future[BFSTraversalFromSingleVertexResult] = Future {
     logger.debug("Start BFS from vertex " + startingVertex)
-    val result = time {
+    val calculation = time {
       bfsTraversalFrom(startingVertex)
     }
 
     logger.debug("Finish BFS started from vertex " + startingVertex
-      + ". Time elapsed in milliseconds: " + result._2)
+      + ". Time elapsed in milliseconds: " + calculation.timeElapsedInMilliseconds)
 
-    BFSTraversalFromSingleVertexResult(result._1, result._2, Thread.currentThread.getName.split("-").last.toLong)
+    BFSTraversalFromSingleVertexResult(
+      calculation.result,
+      calculation.timeElapsedInMilliseconds,
+      Thread.currentThread.getName.split("-").last.toLong)
   }
 }
 

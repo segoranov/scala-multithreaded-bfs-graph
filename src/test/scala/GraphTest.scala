@@ -3,7 +3,6 @@ package graph
 import java.io.{File, PrintWriter}
 
 import graph.Graph.{AdjMatrix, Row}
-import graph.Timer.TimeElapsedInMilliseconds
 import org.scalatest.{FlatSpec, Matchers}
 
 class GraphTest extends FlatSpec with Matchers {
@@ -118,25 +117,22 @@ class GraphTest extends FlatSpec with Matchers {
   "bfs traversal starting from all vertices" should
     "be faster when the threads (tasks) are more" in {
     type NumberOfTasks = Int
+    type TimeElapsedInMilliseconds = Long
 
-    // test only if we have 3 CPUs or more, otherwise threads could interfere with one another
+    // test only if we have 3 CPUs or more, otherwise threads will interfere with one another
     if (Runtime.getRuntime.availableProcessors >= 3) {
-      val mapNumberOfThreadsToTimeElapsed =
-        (1 to Runtime.getRuntime.availableProcessors - 2).toList
-          .foldLeft[Map[NumberOfTasks, TimeElapsedInMilliseconds]](Map.empty)((acc, numberOfTasks) => {
+      val timeTaken = (1 to Runtime.getRuntime.availableProcessors - 2)
+        .map(numberOfThreads =>
+          testGraphManyVertices.bfsTraversalStartingFromAllVertices(numberOfThreads).timeForCompletionInMilliseconds)
 
-          val millisecondsElapsed =
-            testGraphManyVertices.bfsTraversalStartingFromAllVertices(numberOfTasks).timeForCompletionInMilliseconds
+      // should not contain dupliactes,
+      // because this means that different number of threads perform equally
+      val containsDuplicates = timeTaken.size != timeTaken.distinct.size
+      containsDuplicates shouldBe false
 
-          acc + (numberOfTasks -> millisecondsElapsed)
-        })
-
-      // less threads should spent more time on the task
-      mapNumberOfThreadsToTimeElapsed.foreach(pair => {
-        mapNumberOfThreadsToTimeElapsed
-          .filter(other => other._1 < pair._1)
-          .foreach(other => other._2 should be > pair._2)
-      })
+      // more threads should perform faster than less threads,
+      // therefore the sequence must be sorted in descending order
+      timeTaken shouldBe timeTaken.sorted(Ordering.Long.reverse)
     }
   }
 

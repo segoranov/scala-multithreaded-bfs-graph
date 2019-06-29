@@ -1,14 +1,14 @@
 package graph
 
-object Timer {
-  type TimeElapsedInMilliseconds = Long
+case class ResultWithTimeElapsed[R](result: R, timeElapsedInMilliseconds: Long)
 
-  def time[R](block: => R): (R, TimeElapsedInMilliseconds) = {
-    val t0 = System.currentTimeMillis()
+object Timer {
+  def time[R](block: => R): ResultWithTimeElapsed[R] = {
+    val t0 = System.currentTimeMillis
     val result = block // call-by-name
-    val t1 = System.currentTimeMillis()
+    val t1 = System.currentTimeMillis
 
     val elapsedTime = t1 - t0
-    (result, elapsedTime)
+    ResultWithTimeElapsed(result, elapsedTime)
   }
 }
