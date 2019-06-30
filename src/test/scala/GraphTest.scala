@@ -7,17 +7,8 @@ import org.scalatest.{FlatSpec, Matchers}
 
 class GraphTest extends FlatSpec with Matchers {
 
-  def isMatrixSymmetrical(adjMatrix: AdjMatrix): Boolean = {
-    val s = adjMatrix.size
-
-    for (i <- 0 until s; j <- 0 until s) {
-      if (adjMatrix(i)(j) != adjMatrix(j)(i)) {
-        return false
-      }
-    }
-
-    true
-  }
+  def isMatrixSymmetrical(adjMatrix: AdjMatrix) =
+    adjMatrix.indices.forall(i => adjMatrix.indices.forall(j => adjMatrix(i)(j) == adjMatrix(j)(i)))
 
   val testGraph = Graph(AdjMatrix(
     Row(0, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0),
@@ -56,9 +47,7 @@ class GraphTest extends FlatSpec with Matchers {
   }
 
   "withRandomEdges" should "always create symmetrical matrix" in {
-    for (i <- 1 to 100) {
-      isMatrixSymmetrical(Graph.withRandomEdges(i + 50).adjMatrix) shouldBe true
-    }
+    (300 to 500).forall(n => isMatrixSymmetrical(Graph.withRandomEdges(n).adjMatrix)) shouldBe true
   }
 
   "all vertices" should "be from 0 to 10" in {

@@ -69,14 +69,14 @@ case class Graph(adjMatrix: AdjMatrix) extends StrictLogging {
     val sortedListOfVertices = getVertices.toList.sorted
 
     val calculation = time {
-      sortedListOfVertices.map(start_BFS_task_from_vertex(_)).map(Await.result(_, Duration.Inf))
+      sortedListOfVertices.map(start_BFS_task_from_vertex).map(Await.result(_, Duration.Inf))
     }
+
+    threadPool.shutdown
 
     logger.debug("Total number of threads used in current run: " + calculation.result.map(_.threadID).distinct.size)
     logger.debug("Total time elapsed (milliseconds) in current run: "
       + calculation.timeElapsedInMilliseconds + "\n----------------\n")
-
-    threadPool.shutdown
 
     BFSTraversalFromAllVerticesResult(
       allResults = calculation.result,
@@ -159,15 +159,11 @@ case object Graph {
     val fileContent = fileSource.getLines.toArray
 
     try {
-      if (fileContent.size != fileContent.head.toInt + 1) {
+      if (fileContent.size != fileContent.head.toInt + 1)
         throw new IllegalArgumentException("Graph file '" + file + "' has invalid format!")
-      }
     }
     catch {
-
-      case _: Throwable => {
-        throw new IllegalArgumentException("Graph file '" + file + "' has invalid format!")
-      }
+      case _: Throwable => throw new IllegalArgumentException("Graph file '" + file + "' has invalid format!")
     }
 
     fileSource.close
