@@ -65,7 +65,7 @@ object GraphApp extends StrictLogging {
     10:40:17.914 [main] ERROR graph.GraphApp$ - Not all mandatory parameters are present!
   """
 
-  def processCommandLineArguments(args: List[String]): Option[CommandLineArgumentsData] = {
+  def processCommandLineArguments(args: List[String]): Option[CommandLineArgumentsData] =
     if (args.isEmpty) {
       None
     }
@@ -83,7 +83,7 @@ object GraphApp extends StrictLogging {
           if (areValuesInMapValid(argumentsToValuesMap)) {
             Some(CommandLineArgumentsData(
               numberOfTasks = parseNumberOfTasks(argumentsToValuesMap("-t")),
-              numberOfVertices = if (argumentsToValuesMap.contains("-n")) Some(argumentsToValuesMap("-n").toInt) else None,
+              numberOfVertices = argumentsToValuesMap.get("-n").map(_.toInt),
               inputFile = argumentsToValuesMap.get("-i"),
               outputFile = argumentsToValuesMap.get("-o"),
               runQuietly = argumentsToValuesMap.contains("-q")))
@@ -95,107 +95,30 @@ object GraphApp extends StrictLogging {
         case _ => None
       }
     }
-  }
 
-  def areMutuallyExclusiveParametersCorrect(args: List[String]) = !(args.contains("-n") && args.contains("-i"))
-
-  def areMandatoryParametersPresent(args: List[String]) = (args.contains("-i") || args.contains("-n")) && args.contains("-t")
-
-  type ArgumentsToValuesMap = Map[String, String]
-
-  @tailrec
-  def parseCommandLineArguments(map: ArgumentsToValuesMap, list: List[String]): Option[ArgumentsToValuesMap] = {
-    list match {
-      case Nil => Some(map)
-      case "-i" :: graphInputFile :: tail => parseCommandLineArguments(map ++ Map("-i" -> graphInputFile), tail)
-      case "-t" :: numberOfTasks :: tail => parseCommandLineArguments(map ++ Map("-t" -> numberOfTasks), tail)
-      case "-o" :: graphOutputFile :: tail => parseCommandLineArguments(map ++ Map("-o" -> graphOutputFile), tail)
-      case "-n" :: numberOfVertices :: tail => parseCommandLineArguments(map ++ Map("-n" -> numberOfVertices), tail)
-      case "-q" :: tail => parseCommandLineArguments(map ++ Map("-q" -> ""), tail)
-      case "--help" :: _ | "-h" :: _ => None
-      case option :: _ => {
-        logger.error("Unknown option " + option)
-        None
-      }
+  def areValuesInMapValid(argumentsToValuesMap: ArgumentsToValuesMap): Boolean = {
+    val numberOfVerticesIsValid = argumentsToValuesMap.get("-n").map(isValidInteger) match {
+      case Some(false) => false
+      case _ => true
     }
-  }
 
-  def parseNumberOfTasks(numberOfTasks: String): List[Int] = {
-    /* Valid formats about number of tasks:
-            15 -> run BFS with 15 threads
-            1-20 -> run BFS with number of threads 1, 2, 3, 4, ... , 20
-            1,5,20,14 -> run BFS with 1, 5, 20, 14 number of threads
-    */
-
-    if (isValidInteger(numberOfTasks)) {
-      List(numberOfTasks.toInt)
-    }
-    else if (numberOfTasks.contains("-")) {
-      // format: x-y
-      val rangeOfTasks = numberOfTasks.split("-")
-
-      val rangeStart = rangeOfTasks(0).toInt
-      val rangeEnd = rangeOfTasks(1).toInt
-
-      (rangeStart to rangeEnd).toList
-    } else if (numberOfTasks.contains(",")) {
-      // format: x,y,z,...
-      numberOfTasks.split(",").map(_.toInt).toList
-    } else {
-      List.empty
-    }
-  }
-
-  def isValidInteger(str: String): Boolean = {
-    try {
-      str.toInt
-      true
-    }
-    catch {
-      case _: Throwable => {
+    val inputFileIsValid = argumentsToValuesMap.get("-i").map(file => Files.exists(Paths.get(file))) match {
+      case Some(false) => {
+        logger.error("Graph input file '" + argumentsToValuesMap("-i") + "' does not exist!")
         false
       }
+      case _ => true
     }
+
+    areNumberOfTasksInValidFormat(argumentsToValuesMap("-t")) && numberOfVerticesIsValid && inputFileIsValid
   }
 
-  def areValuesInMapValid(map: ArgumentsToValuesMap): Boolean = {
-    val numberOfVerticesIsValid = {
-      if (map.contains("-n")) {
-        isValidInteger(map("-n"))
-      }
-      else {
-        true
-      }
-    }
-
-    val inputFileIsValid = {
-      if (map.contains("-i")) {
-        val inputFile = map("-i")
-
-        val fileExists = Files.exists(Paths.get(inputFile))
-
-        if (!fileExists) {
-          logger.error("Graph input file '" + inputFile + "' does not exist!")
-        }
-
-        fileExists
-      }
-      else {
-        true
-      }
-    }
-
-    areNumberOfTasksInValidFormat(map("-t")) && numberOfVerticesIsValid && inputFileIsValid
-  }
-
-  def areNumberOfTasksInValidFormat(numberOfTasks: String) = {
-
-    /* Valid formats about number of tasks:
-            15 -> run BFS with 15 threads
-            1-20 -> run BFS with number of threads 1, 2, 3, 4, ... , 20
-            1,5,20,14 -> run BFS with 1, 5, 20, 14 number of threads
-    */
-
+  /* Valid formats about number of tasks:
+           15 -> run BFS with 15 threads
+           1-20 -> run BFS with number of threads 1, 2, 3, 4, ... , 20
+           1,5,20,14 -> run BFS with 1, 5, 20, 14 number of threads
+   */
+  def areNumberOfTasksInValidFormat(numberOfTasks: String) =
     if (isValidInteger(numberOfTasks)) {
       true
     }
@@ -237,16 +160,64 @@ object GraphApp extends StrictLogging {
       logger.error("Invalid range in number of tasks specified!")
       false
     }
+
+  def areMutuallyExclusiveParametersCorrect(args: List[String]) = !(args.contains("-n") && args.contains("-i"))
+
+  def areMandatoryParametersPresent(args: List[String]) = (args.contains("-i") || args.contains("-n")) && args.contains("-t")
+
+  type ArgumentsToValuesMap = Map[String, String]
+
+  @tailrec
+  def parseCommandLineArguments(map: ArgumentsToValuesMap, list: List[String]): Option[ArgumentsToValuesMap] = list match {
+    case Nil => Some(map)
+    case "-i" :: graphInputFile :: tail => parseCommandLineArguments(map ++ Map("-i" -> graphInputFile), tail)
+    case "-t" :: numberOfTasks :: tail => parseCommandLineArguments(map ++ Map("-t" -> numberOfTasks), tail)
+    case "-o" :: graphOutputFile :: tail => parseCommandLineArguments(map ++ Map("-o" -> graphOutputFile), tail)
+    case "-n" :: numberOfVertices :: tail => parseCommandLineArguments(map ++ Map("-n" -> numberOfVertices), tail)
+    case "-q" :: tail => parseCommandLineArguments(map ++ Map("-q" -> ""), tail)
+    case "--help" :: _ | "-h" :: _ => None
+    case option :: _ => {
+      logger.error("Unknown option " + option)
+      None
+    }
   }
 
-  def createGraphFromCommandLineArguments(commandLineArgumentsData: CommandLineArgumentsData) = {
+  def parseNumberOfTasks(numberOfTasks: String): List[Int] =
+    if (isValidInteger(numberOfTasks)) {
+      List(numberOfTasks.toInt)
+    }
+    else if (numberOfTasks.contains("-")) {
+      // format: x-y
+      val rangeOfTasks = numberOfTasks.split("-")
+
+      val rangeStart = rangeOfTasks(0).toInt
+      val rangeEnd = rangeOfTasks(1).toInt
+
+      (rangeStart to rangeEnd).toList
+    } else if (numberOfTasks.contains(",")) {
+      // format: x,y,z,...
+      numberOfTasks.split(",").map(_.toInt).toList
+    } else {
+      List.empty
+    }
+
+  def isValidInteger(str: String): Boolean =
+    try {
+      str.toInt
+      true
+    }
+    catch {
+      case _: Throwable =>
+        false
+    }
+
+  def createGraphFromCommandLineArguments(commandLineArgumentsData: CommandLineArgumentsData) =
     if (commandLineArgumentsData.inputFile.isDefined) {
       Graph.fromFile(commandLineArgumentsData.inputFile.get)
     }
     else {
       Graph.withRandomEdges(commandLineArgumentsData.numberOfVertices.get)
     }
-  }
 
   def writeAlgorithmResultsToFile(outputFile: String)
                                  (implicit graph: Graph,
@@ -268,36 +239,32 @@ object GraphApp extends StrictLogging {
   }
 
   def writeQuietlyAlgorithmResultsToFile(outputFile: String = "graph-bfs-quiet-result.txt")
-                                        (implicit results: List[BFSTraversalFromAllVerticesResult]) = {
+                                        (implicit results: List[BFSTraversalFromAllVerticesResult]) =
     new PrintWriter(outputFile) {
       write(quietResultToString)
       close
     }
-  }
 
-  def quietResultToString(implicit results: List[BFSTraversalFromAllVerticesResult]) = {
+  def quietResultToString(implicit results: List[BFSTraversalFromAllVerticesResult]) =
     results.map(r => r.numberOfThreads + " threads -> " + r.timeForCompletionInMilliseconds + " ms").reduceLeft(_ + "\n" + _)
-  }
 
-  def main(args: Array[String]): Unit = {
-    processCommandLineArguments(args.toList) match {
-      case None => println(usage)
-      case Some(commandLineArgumentsData) => {
-        implicit val graph = createGraphFromCommandLineArguments(commandLineArgumentsData)
+  def main(args: Array[String]): Unit = processCommandLineArguments(args.toList) match {
+    case None => println(usage)
+    case Some(commandLineArgumentsData) => {
+      implicit val graph = createGraphFromCommandLineArguments(commandLineArgumentsData)
 
-        implicit val resultsFromAlgorithm = commandLineArgumentsData.numberOfTasks.map(graph.bfsTraversalStartingFromAllVertices)
+      implicit val resultsFromAlgorithm = commandLineArgumentsData.numberOfTasks.map(graph.bfsTraversalStartingFromAllVertices)
 
-        if (commandLineArgumentsData.outputFile.isDefined) {
-          writeAlgorithmResultsToFile(commandLineArgumentsData.outputFile.get)
-        }
-
-        if (commandLineArgumentsData.runQuietly) {
-          writeQuietlyAlgorithmResultsToFile()
-        }
-
-        // print quiet results to screen for convenience
-        println(quietResultToString)
+      if (commandLineArgumentsData.outputFile.isDefined) {
+        writeAlgorithmResultsToFile(commandLineArgumentsData.outputFile.get)
       }
+
+      if (commandLineArgumentsData.runQuietly) {
+        writeQuietlyAlgorithmResultsToFile()
+      }
+
+      // print quiet results to screen for convenience
+      println(quietResultToString)
     }
   }
 }

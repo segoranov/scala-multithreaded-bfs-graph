@@ -49,7 +49,7 @@ class GraphTest extends FlatSpec with Matchers {
 
   val testGraphFileName = "testGraph.txt"
 
-  val testGraphManyVertices = Graph.withRandomEdges(numberOfVertices = 500)
+  val testGraphManyVertices = Graph.withRandomEdges(numberOfVertices = 400)
 
   "testGraph adjacency matrix" should "be symmetrical" in {
     isMatrixSymmetrical(testGraph.adjMatrix) shouldBe true
