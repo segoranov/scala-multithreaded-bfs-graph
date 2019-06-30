@@ -13,7 +13,15 @@ case class CommandLineArgumentsData(numberOfTasks: List[Int],
                                     numberOfVertices: Option[Int],
                                     runQuietly: Boolean)
 
+object NumberOfTasksFormats extends Enumeration {
+  type Format = Value
+  val DashSeparated, CommaSeparated, JustNumber, Invalid = Value
+}
+
 object GraphApp extends StrictLogging {
+
+  import NumberOfTasksFormats._
+
   val usage =
     """
     Usage: java -jar <file.jar> -i <graph-file.in> -t <number of tasks> [-o <output_file_name>] [-q]
@@ -66,9 +74,7 @@ object GraphApp extends StrictLogging {
   """
 
   def processCommandLineArguments(args: List[String]): Option[CommandLineArgumentsData] =
-    if (args.isEmpty) {
-      None
-    }
+    if (args.isEmpty) None
     else if (!areMandatoryParametersPresent(args)) {
       logger.error("Not all mandatory parameters are present!")
       None
@@ -77,95 +83,18 @@ object GraphApp extends StrictLogging {
       logger.error("The parameters -i and -n are mutually exclusive. Only one of the two should be present.")
       None
     }
-    else {
-      parseCommandLineArguments(Map.empty, args) match {
-        case Some(argumentsToValuesMap) => {
-          if (areValuesInMapValid(argumentsToValuesMap)) {
-            Some(CommandLineArgumentsData(
-              numberOfTasks = parseNumberOfTasks(argumentsToValuesMap("-t")),
-              numberOfVertices = argumentsToValuesMap.get("-n").map(_.toInt),
-              inputFile = argumentsToValuesMap.get("-i"),
-              outputFile = argumentsToValuesMap.get("-o"),
-              runQuietly = argumentsToValuesMap.contains("-q")))
-          }
-          else {
-            None
-          }
-        }
-        case _ => None
+    else parseCommandLineArguments(Map.empty, args) match {
+      case Some(argumentsToValuesMap) => if (areValuesInMapValid(argumentsToValuesMap)) {
+        Some(CommandLineArgumentsData(
+          numberOfTasks = parseNumberOfTasks(argumentsToValuesMap("-t")).get,
+          numberOfVertices = argumentsToValuesMap.get("-n").map(_.toInt),
+          inputFile = argumentsToValuesMap.get("-i"),
+          outputFile = argumentsToValuesMap.get("-o"),
+          runQuietly = argumentsToValuesMap.contains("-q")))
       }
+      else None
+      case _ => None
     }
-
-  def areValuesInMapValid(argumentsToValuesMap: ArgumentsToValuesMap): Boolean = {
-    val numberOfVerticesIsValid = argumentsToValuesMap.get("-n").map(isValidInteger) match {
-      case Some(false) => false
-      case _ => true
-    }
-
-    val inputFileIsValid = argumentsToValuesMap.get("-i").map(file => Files.exists(Paths.get(file))) match {
-      case Some(false) => {
-        logger.error("Graph input file '" + argumentsToValuesMap("-i") + "' does not exist!")
-        false
-      }
-      case _ => true
-    }
-
-    areNumberOfTasksInValidFormat(argumentsToValuesMap("-t")) && numberOfVerticesIsValid && inputFileIsValid
-  }
-
-  /* Valid formats about number of tasks:
-           15 -> run BFS with 15 threads
-           1-20 -> run BFS with number of threads 1, 2, 3, 4, ... , 20
-           1,5,20,14 -> run BFS with 1, 5, 20, 14 number of threads
-   */
-  def areNumberOfTasksInValidFormat(numberOfTasks: String) =
-    if (isValidInteger(numberOfTasks)) {
-      true
-    }
-    else if (numberOfTasks.contains("-")) {
-      // format: x-y
-      val rangeOfTasks = numberOfTasks.split("-")
-
-      if (rangeOfTasks.size != 2) {
-        // must be 2 if format is x-y
-        logger.error("Invalid range in number of tasks specified! Format must be 'x-y' - one dash and two numbers around it, specifying a valid range.")
-        false
-      } else {
-        if (!isValidInteger(rangeOfTasks(0)) || !isValidInteger(rangeOfTasks(1))) {
-          logger.error("Invalid range in number of tasks specified!")
-          false
-        } else {
-          val rangeStart = rangeOfTasks(0).toInt
-          val rangeEnd = rangeOfTasks(1).toInt
-
-          if (rangeStart > rangeEnd) {
-            logger.error("Invalid range in number of tasks specified! " + rangeStart + " is greater than " + rangeEnd + "!")
-            false
-          } else {
-            true
-          }
-        }
-      }
-    } else if (numberOfTasks.contains(",")) {
-      // format: x,y,z,...
-      val arrNumberOfTasks = numberOfTasks.split(",")
-
-      if (arrNumberOfTasks.exists(!isValidInteger(_))) {
-        logger.error("Invalid number of tasks specified!")
-        false
-      } else {
-        true
-      }
-    } else {
-      logger.error("Invalid range in number of tasks specified!")
-      false
-    }
-
-  def areMutuallyExclusiveParametersCorrect(args: List[String]) = !(args.contains("-n") && args.contains("-i"))
-
-  def areMandatoryParametersPresent(args: List[String]) = (args.contains("-i") || args.contains("-n")) && args.contains("-t")
-
-  type ArgumentsToValuesMap = Map[String, String]
 
   @tailrec
   def parseCommandLineArguments(map: ArgumentsToValuesMap, list: List[String]): Option[ArgumentsToValuesMap] = list match {
@@ -182,24 +111,80 @@ object GraphApp extends StrictLogging {
     }
   }
 
-  def parseNumberOfTasks(numberOfTasks: String): List[Int] =
-    if (isValidInteger(numberOfTasks)) {
-      List(numberOfTasks.toInt)
+  def areValuesInMapValid(argumentsToValuesMap: ArgumentsToValuesMap): Boolean = {
+    val numberOfVerticesIsValid = argumentsToValuesMap.get("-n").map(isValidInteger) match {
+      case Some(false) => {
+        logger.error("Invalid number of vertices!")
+        false
+      }
+      case _ => true
     }
-    else if (numberOfTasks.contains("-")) {
-      // format: x-y
-      val rangeOfTasks = numberOfTasks.split("-")
 
-      val rangeStart = rangeOfTasks(0).toInt
-      val rangeEnd = rangeOfTasks(1).toInt
+    val inputFileIsValid = argumentsToValuesMap.get("-i").map(file => Files.exists(Paths.get(file))) match {
+      case Some(false) => {
+        logger.error("Graph input file '" + argumentsToValuesMap("-i") + "' does not exist!")
+        false
+      }
+      case _ => true
+    }
 
-      (rangeStart to rangeEnd).toList
-    } else if (numberOfTasks.contains(",")) {
-      // format: x,y,z,...
-      numberOfTasks.split(",").map(_.toInt).toList
+    if (!areNumberOfTasksInValidFormat(argumentsToValuesMap("-t"))) {
+      logger.error("Invalid format for number of tasks is used!")
+      false
     } else {
-      List.empty
+      numberOfVerticesIsValid && inputFileIsValid
     }
+  }
+
+  def parseNumberOfTasks(numberOfTasks: String): Option[List[Int]] = {
+    if (!areNumberOfTasksInValidFormat(numberOfTasks)) None
+    else getFormatOfNumberOfTasks(numberOfTasks) match {
+      case JustNumber => Some(List(numberOfTasks.toInt))
+      case DashSeparated => {
+        val rangeOfTasks = numberOfTasks.split("-")
+        Some((rangeOfTasks(0).toInt to rangeOfTasks(1).toInt).toList)
+      }
+      case CommaSeparated => Some(numberOfTasks.split(",").map(_.toInt).toList)
+      case Invalid => None
+    }
+  }
+
+  /* Valid formats about number of tasks:
+          1st format (just a number): 15 -> run BFS with 15 threads
+          2nd format (dash separated): 1-20 -> run BFS with number of threads 1, 2, 3, 4, ... , 20
+          3rd format (comma separated): 1,5,20,14 -> run BFS with 1, 5, 20, 14 number of threads
+   */
+  def areNumberOfTasksInValidFormat(numberOfTasks: String) = getFormatOfNumberOfTasks(numberOfTasks) match {
+    case JustNumber => true
+    case CommaSeparated => areCommaFormattedTasksValid(numberOfTasks)
+    case DashSeparated => areDashFormattedTasksValid(numberOfTasks)
+    case Invalid => false
+  }
+
+  def areDashFormattedTasksValid(numberOfTasks: String) = {
+    val rangeOfTasks = numberOfTasks.split("-")
+
+    rangeOfTasks.size == 2 &&
+      isValidInteger(rangeOfTasks(0)) &&
+      isValidInteger(rangeOfTasks(1)) &&
+      rangeOfTasks(0).toInt < rangeOfTasks(1).toInt
+  }
+
+  def areCommaFormattedTasksValid(numberOfTasks: String) =
+    numberOfTasks.split(",").forall(isValidInteger)
+
+  def getFormatOfNumberOfTasks(numberOfTasks: String) = {
+    if (isValidInteger(numberOfTasks)) JustNumber
+    else if (numberOfTasks.contains("-")) DashSeparated
+    else if (numberOfTasks.contains(",")) CommaSeparated
+    else Invalid
+  }
+
+  def areMutuallyExclusiveParametersCorrect(args: List[String]) = !(args.contains("-n") && args.contains("-i"))
+
+  def areMandatoryParametersPresent(args: List[String]) = (args.contains("-i") || args.contains("-n")) && args.contains("-t")
+
+  type ArgumentsToValuesMap = Map[String, String]
 
   def isValidInteger(str: String): Boolean =
     try {
