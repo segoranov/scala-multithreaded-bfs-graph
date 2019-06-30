@@ -103,8 +103,8 @@ case class Graph(adjMatrix: AdjMatrix) extends StrictLogging {
     bfs(Queue(start), Set(start), List.empty).reverse
   }
 
-  private def start_BFS_task_from_vertex(startingVertex: Vertex)(implicit ec: ExecutionContext)
-  : Future[BFSTraversalFromSingleVertexResult] = Future {
+  private def start_BFS_task_from_vertex(startingVertex: Vertex)
+                                        (implicit ec: ExecutionContext) = Future {
     logger.debug("Start BFS from vertex " + startingVertex)
     val calculation = time {
       bfsTraversalFrom(startingVertex)

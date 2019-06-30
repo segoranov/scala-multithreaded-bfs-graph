@@ -219,21 +219,21 @@ class GraphTest extends FlatSpec with Matchers {
   }
 
   "command line arguments" should "be invalid in" in {
-    GraphApp.processCommandLineArguments(List("-i", "graph-in.txt", "-n", "1024", "-t", "25")) shouldBe None
-    GraphApp.processCommandLineArguments(List("-i", "graph-in.txt", "-n", "1024", "-t", "")) shouldBe None
-    GraphApp.processCommandLineArguments(List("-i", "graph-in.txt", "-n", "1024")) shouldBe None
-    GraphApp.processCommandLineArguments(List("-i", "__NON_FUCKING_EXISTENT_FILE___", "-t", "25")) shouldBe None
-    GraphApp.processCommandLineArguments(List("-n", "125", "-q", "-t", "25asd")) shouldBe None
-    GraphApp.processCommandLineArguments(List("-n", "125", "-q", "-t", "1- 20")) shouldBe None
-    GraphApp.processCommandLineArguments(List("-n", "125", "-q", "-t", "1,2, 3,4,5")) shouldBe None
+    CommandLineArgumentsParser.parse(List("-i", "graph-in.txt", "-n", "1024", "-t", "25")) shouldBe None
+    CommandLineArgumentsParser.parse(List("-i", "graph-in.txt", "-n", "1024", "-t", "")) shouldBe None
+    CommandLineArgumentsParser.parse(List("-i", "graph-in.txt", "-n", "1024")) shouldBe None
+    CommandLineArgumentsParser.parse(List("-i", "__NON_FUCKING_EXISTENT_FILE___", "-t", "25")) shouldBe None
+    CommandLineArgumentsParser.parse(List("-n", "125", "-q", "-t", "25asd")) shouldBe None
+    CommandLineArgumentsParser.parse(List("-n", "125", "-q", "-t", "1- 20")) shouldBe None
+    CommandLineArgumentsParser.parse(List("-n", "125", "-q", "-t", "1,2, 3,4,5")) shouldBe None
   }
 
   it should "be valid" in {
-    GraphApp.processCommandLineArguments(List("-n", "125", "-o", "output.txt", "-t", "25")) should not be None
-    GraphApp.processCommandLineArguments(List("-n", "125", "-t", "25")) should not be None
-    GraphApp.processCommandLineArguments(List("-n", "125", "-q", "-t", "25")) should not be None
-    GraphApp.processCommandLineArguments(List("-n", "125", "-q", "-t", "1-20")) should not be None
-    GraphApp.processCommandLineArguments(List("-n", "125", "-q", "-t", "1,2,3,4,5")) should not be None
+    CommandLineArgumentsParser.parse(List("-n", "125", "-o", "output.txt", "-t", "25")) should not be None
+    CommandLineArgumentsParser.parse(List("-n", "125", "-t", "25")) should not be None
+    CommandLineArgumentsParser.parse(List("-n", "125", "-q", "-t", "25")) should not be None
+    CommandLineArgumentsParser.parse(List("-n", "125", "-q", "-t", "1-20")) should not be None
+    CommandLineArgumentsParser.parse(List("-n", "125", "-q", "-t", "1,2,3,4,5")) should not be None
   }
 
   "BFS traversal results" should "be the same regardless of the number of threads" in {
